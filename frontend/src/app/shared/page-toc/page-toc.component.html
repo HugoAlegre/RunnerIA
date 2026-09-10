@@ -1,0 +1,16 @@
+<aside class="page-toc panel">
+  <div class="toc-title">{{ title }}</div>
+  <nav class="toc-nav">
+    @for (item of items; track item.id) {
+      @if (item.sepBefore) {
+        <div class="toc-sep">{{ item.sepBefore }}</div>
+      }
+      <a
+        [href]="'#' + item.id"
+        [class.toc-h1]="item.level === 1"
+        [class.toc-h2]="item.level === 2"
+        (click)="onClick(item.id, $event)"
+      >{{ item.label }}</a>
+    }
+  </nav>
+</aside>

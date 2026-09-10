@@ -1,0 +1,594 @@
+<div class="ayuda-layout">
+  <app-page-toc
+    title="Manual"
+    [items]="tocItems()"
+    (navigate)="irA($event)"
+  />
+
+  <div class="ayuda-main">
+    <!-- ========== EMPEZAR ========== -->
+    <section class="panel" id="ayuda-inicio">
+      <h2>@if (workspace.esSotAccusys()) { Empezar en 5 minutos } @else { Inicio rápido }</h2>
+      <p class="lead">
+        @if (workspace.esSotAccusys()) {
+          Guía operativa del <strong>Runner SOT</strong>: configurar, ejecutar, generar casos y entregar evidencias.
+          El manual técnico (scripts, appsettings) queda al final, colapsado.
+        } @else {
+          Guía breve: configurar URL/BD, ejecutar pruebas y revisar evidencias.
+        }
+      </p>
+      <p class="version-line muted small">Runner <strong>{{ runnerVersion }}</strong></p>
+
+      <ol class="steps checklist-demo">
+        <li>
+          <strong>Iniciar:</strong> doble clic en <code>Iniciar-Runner.bat</code> (carpeta <code>RunnerOperador</code> o raíz del repo). No abras el <code>.ps1</code> directo. No cerrar la ventana negra.
+          Abrir la URL que indica (típicamente <code>localhost:5050</code>).
+        </li>
+        <li>
+          <strong>Proyecto:</strong>
+          @if (workspace.esSotAccusys()) {
+            elegir <strong>SOT Accusys</strong> (o crear proyecto con plantilla SOT).
+          } @else {
+            elegir o crear proyecto genérico con URL, BD e integraciones.
+          }
+        </li>
+        <li>
+          <strong>PIN:</strong> primera vez configurar PIN (mín. 4 caracteres); luego iniciar sesión.
+        </li>
+        <li>
+          <strong>Configuración:</strong> completar ambiente, acceso, SQL
+          @if (workspace.esSotAccusys()) { , COBIS } y Jira si vas a Generar.
+          Usar <strong>Probar conexión</strong> en cada bloque y los chips de salud arriba.
+        </li>
+        <li>
+          <strong>Comprobar instalación:</strong> Runner → botón <strong>Comprobar instalación</strong> o módulo <strong>Verificar instalación</strong> (compila y lista tests; no abre SOT).
+        </li>
+        <li>
+          <strong>Primera corrida:</strong> un escenario corto del módulo que uses → <strong>Ejecutar</strong>.
+        </li>
+        <li>
+          <strong>Lote grande:</strong> recién después regresión del módulo o <strong>Correr todo (N)</strong>.
+        </li>
+      </ol>
+
+      <div class="role-cards">
+        <div class="help-card">
+          <h4>Solo ejecutar</h4>
+          <p>
+            <a href="#ayuda-config" (click)="irA('ayuda-config', $event)">Config</a> →
+            <a href="#ayuda-ejecutar" (click)="irA('ayuda-ejecutar', $event)">Ejecutar</a> →
+            <a href="#ayuda-evidencias" (click)="irA('ayuda-evidencias', $event)">Evidencias</a>
+          </p>
+        </div>
+        @if (workspace.esSotAccusys()) {
+          <div class="help-card">
+            <h4>Crear casos</h4>
+            <p>
+              <a href="#ayuda-generar" (click)="irA('ayuda-generar', $event)">Generar</a> →
+              <a href="#ayuda-runneria" (click)="irA('ayuda-runneria', $event)">RunnerIA</a> → Guardar → Runner
+            </p>
+          </div>
+          <div class="help-card">
+            <h4>Scripts / JSON</h4>
+            <p>
+              <a href="#ayuda-manual" (click)="irA('ayuda-manual', $event)">Manual técnico</a>
+              (PowerShell, appsettings, escenarios)
+            </p>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- ========== MAPA APP ========== -->
+    <section class="panel" id="ayuda-mapa">
+      <h2>Mapa de la aplicación</h2>
+      <p class="muted">Cuatro solapas principales tras elegir proyecto y PIN.</p>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>Solapa</th>
+              <th>Para qué</th>
+              <th>Acciones clave</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Runner</strong></td>
+              <td>Ejecutar pruebas y ver evidencias</td>
+              <td>Módulo → escenario → Ejecutar · Regresión del módulo · Correr todo (N) · Comprobar instalación</td>
+            </tr>
+            <tr>
+              <td><strong>Generar</strong></td>
+              <td>Crear o editar casos Gherkin</td>
+              <td>Jira/docs → Analizar → Guardar · Pestaña Módulos</td>
+            </tr>
+            <tr>
+              <td><strong>Configuración</strong></td>
+              <td>URLs, credenciales, conexiones</td>
+              <td>Chips de salud · Secciones plegables · Guardar configuración (barra fija abajo)</td>
+            </tr>
+            <tr>
+              <td><strong>Ayuda</strong></td>
+              <td>Esta guía + manual técnico</td>
+              <td>Índice lateral · Problemas frecuentes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <blockquote class="ayuda-note">
+        <strong>Brandbar:</strong> pill de estado (Listo / Offline / En curso), versión beta, tema claro/oscuro y Salir.
+        Una sola corrida a la vez: si hay prueba en ejecución, el detalle avisa antes de lanzar otra.
+      </blockquote>
+    </section>
+
+    @if (workspace.esSotAccusys()) {
+    <!-- ========== PROYECTO VS PERFIL ========== -->
+    <section class="panel" id="ayuda-proyecto-perfil">
+      <h2>Proyecto vs perfil (no es lo mismo)</h2>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Dónde se elige</th>
+              <th>Qué define</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Proyecto</strong></td>
+              <td>Pantalla al entrar · Generar → RunnerIA</td>
+              <td>Catálogo activo, plantilla SOT vs genérico, integraciones del proyecto</td>
+            </tr>
+            <tr>
+              <td><strong>Perfil</strong></td>
+              <td>Configuración → Perfil del proyecto</td>
+              <td>Presets DEV/QA Accusys vs formulario vacío (sin hosts precargados)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        Cambiar proyecto o perfil <strong>no borra</strong> los casos Gherkin ni el catálogo del Runner.
+      </p>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>Perfil</th>
+              <th>Qué trae</th>
+              <th>Para quién</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>SOT Accusys</strong></td>
+              <td>Presets DEV/QA (<code>sot-app.accusys-*.io</code>), SQL SOT, Auth OpenID QA, sucursales</td>
+              <td>Equipo Accusys / células SOT habituales</td>
+            </tr>
+            <tr>
+              <td><strong>Otro / vacío</strong></td>
+              <td>Sin URLs ni bases precargadas; el operador completa todo</td>
+              <td>Banco u otra instancia fuera de presets Accusys</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Reglas operativas SOT (pruebas)</h3>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr><th>Regla</th><th>Detalle</th></tr>
+          </thead>
+          <tbody>
+            @for (r of reglasSotOperativas; track r.regla) {
+              <tr>
+                <td><strong>{{ r.regla }}</strong></td>
+                <td>{{ r.detalle }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    }
+
+    <!-- ========== CONFIG ========== -->
+    <section class="panel" id="ayuda-config">
+      <h2>Configuración paso a paso</h2>
+      <p class="muted">
+        Orden recomendado. Los <strong>chips</strong> arriba (Acceso, SQL, COBIS/Host, Jira) saltan a cada sección.
+        Verde = probado OK recientemente; amarillo = falta probar o hay advertencia.
+      </p>
+      <ol class="steps">
+        <li><strong>Perfil del proyecto</strong> — SOT Accusys u Otro/vacío @if (workspace.esSotAccusys()) { (ver sección anterior) }.</li>
+        <li><strong>Ambiente / URL</strong> — URL de inicio de la app. SOT: DEV o QA; otro: tu URL.</li>
+        <li><strong>Acceso app</strong> — usuario, contraseña, sucursal (secrets en servidor).</li>
+        @if (workspace.esSotAccusys()) {
+          <li><strong>Usuarios SOT</strong> — supervisor y roles; el primero se usa en supervisión.</li>
+        }
+        <li><strong>SQL</strong> — servidor, puerto, usuario, base (@if (workspace.esSotAccusys()) { <code>UW_CASHIER</code> } @else { tu BD }). <strong>Probar conexión SQL</strong>.</li>
+        <li><strong>@if (workspace.esSotAccusys()) { COBIS / host } @else { Host operativo }</strong> — Sybase u otro; vacío si no aplica. <strong>Probar conexión</strong>.</li>
+        <li><strong>Jira</strong> — email + API token. <strong>Probar conexión Jira</strong>.</li>
+        <li><strong>Xray</strong> — credenciales listas; sync automático en evolución.</li>
+        <li><strong>LLM</strong> (opcional) — pulir Gherkin al Analizar.</li>
+        @if (workspace.esSotAccusys()) {
+          <li><strong>Repos célula SOT</strong> — TFS, PAT en secrets, sincronizar develop (opcional para Analizar).</li>
+        }
+        <li><strong>Guardar configuración</strong> — barra fija al final de la página.</li>
+      </ol>
+      @if (!workspace.esSotAccusys()) {
+        <blockquote class="ayuda-note">
+          Las integraciones del proyecto (URL, BD, Jira…) se definen al crear/modificar el proyecto.
+          Acá completás las conexiones operativas para ejecutar.
+        </blockquote>
+      }
+      <blockquote class="ayuda-note">
+        Contraseñas de app y BD → <code>appsettings.secrets.json</code> en el servidor local.
+        Tokens Jira / Xray / LLM: sessionStorage si marcás Recordar; no quedan permanentes en disco del navegador.
+      </blockquote>
+    </section>
+
+    <!-- ========== EJECUTAR ========== -->
+    <section class="panel" id="ayuda-ejecutar">
+      <h2>Ejecutar pruebas</h2>
+      <h3>Pantalla Runner</h3>
+      <ul class="steps">
+        <li><strong>Sidebar izquierdo:</strong> buscador, árbol de módulos, lista de escenarios con badge OK / Falló / —.</li>
+        <li><strong>Detalle derecho:</strong> título del caso (corto + descripción), ambiente, resultado esperado, evidencias, botón <strong>Ejecutar</strong>.</li>
+        <li><strong>Último ítem de cada módulo:</strong> regresión de ese módulo (no confundir con Correr todo).</li>
+        <li><strong>Pie del sidebar:</strong> <strong>Correr todo (N)</strong> = regresión completa; <strong>Comprobar instalación</strong> = verificar build y detección de tests (no abre SOT).</li>
+        <li><strong>Módulo Verificar instalación:</strong> misma comprobación que el botón del pie; útil la primera vez en tu PC.</li>
+      </ul>
+
+      <h3>Tipos de corrida</h3>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>Acción</th>
+              <th>Dónde</th>
+              <th>Qué corre</th>
+              <th>Evidencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of tiposCorrida; track t.accion) {
+              @if (workspace.esSotAccusys() || t.accion !== 'Release 9') {
+                <tr>
+                  <td><strong>{{ t.accion }}</strong></td>
+                  <td>{{ t.donde }}</td>
+                  <td>{{ t.queCorre }}</td>
+                  <td>{{ t.evidencia }}</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <blockquote class="ayuda-note">
+        Si hay corrida en curso: banner en el detalle. Podés <strong>Detener</strong> o esperar.
+        <strong>Liberar corrida</strong> solo si el estado local quedó trabado sin proceso real.
+      </blockquote>
+    </section>
+
+    <!-- ========== EVIDENCIAS ========== -->
+    <section class="panel" id="ayuda-evidencias">
+      <h2>Evidencias e informes</h2>
+      <ol class="steps">
+        <li>Al terminar una corrida: <strong>Ver informe HTML</strong>, abrir en pestaña o <strong>Descargar ZIP</strong>.</li>
+        <li>Cada escenario guarda su <strong>última ejecución</strong>: al volver al caso podés descargar lo último sin volver a correr.</li>
+        <li>El ZIP incluye informe Extent, capturas y, si hubo consultas, carpeta <code>ConsultasDb</code> (SQL COBIS/SOT auditado).</li>
+        <li>La carpeta de evidencias en disco depende de <strong>EvidenciaSettings</strong> (p. ej. Escritorio / OneDrive); no es fija por usuario.</li>
+        @if (workspace.esSotAccusys()) {
+          <li>Regresión del módulo: además genera paquete QA del módulo (Excel casos + evidencias alineado SC-514).</li>
+        }
+      </ol>
+      <blockquote class="ayuda-note">
+        Tira Auditora (TA): si la descripción está truncada en grilla, usar tooltip completo en capturas de evidencia manual.
+      </blockquote>
+    </section>
+
+    @if (workspace.esSotAccusys()) {
+    <!-- ========== RELEASE 9 ========== -->
+    <section class="panel" id="ayuda-release9">
+      <h2>Release 9 — Runner vs QA manual</h2>
+      <p class="muted">
+        Release 9 se entrega en dos vías. El módulo <strong>Release 9</strong> en Runner y el lote
+        <strong>Correr todo Release 9</strong> ejecutan solo la parte automatizada.
+      </p>
+      <h3>En Runner (automatización)</h3>
+      <p class="muted small">{{ release9Auto.join(' · ') }}</p>
+      <h3>Solo QA manual (Excel / evidencias, fuera del Runner)</h3>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr><th>Tickets</th><th>Notas</th></tr>
+          </thead>
+          <tbody>
+            @for (m of release9Manual; track m.id) {
+              <tr>
+                <td><strong>{{ m.id }}</strong></td>
+                <td>{{ m.nota }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <blockquote class="ayuda-note">
+        SC-161: parte de casos lleva tag <code>&#64;SC161_Manual</code> y queda fuera del lote automático «Todos» del ticket.
+      </blockquote>
+    </section>
+
+    <!-- ========== GENERAR ========== -->
+    <section class="panel" id="ayuda-generar">
+      <h2>Generar casos — criterios y flujo</h2>
+      <h3>Qué acepta cada campo</h3>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>Campo</th>
+              <th>Obligatorio</th>
+              <th>Criterio</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of criteriosGenerar; track c.campo) {
+              <tr>
+                <td><strong>{{ c.campo }}</strong></td>
+                <td>{{ c.obligatorio }}</td>
+                <td>{{ c.criterio }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Subir archivos (arrastrar o elegir)</h3>
+      <p class="muted small">
+        En <strong>Generar → Crear → Archivos</strong> podés arrastrar al recuadro o usar <strong>Elegir archivos</strong>.
+        Los <code>.feature</code> van directo a la vista previa (sin obligar Analizar). El resto alimenta <strong>Analizar</strong>.
+      </p>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr><th>Formato</th><th>Uso</th><th>Notas</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>.feature</code></td>
+              <td>Gherkin directo</td>
+              <td>UTF-8. Revisar → Guardar o Importar como lote.</td>
+            </tr>
+            <tr>
+              <td><code>.pdf</code>, <code>.docx</code></td>
+              <td>Documentación</td>
+              <td>PDF con texto; Word solo <code>.docx</code> (no <code>.doc</code>).</td>
+            </tr>
+            <tr>
+              <td><code>.txt</code>, <code>.md</code>, <code>.json</code>, <code>.csv</code>, <code>.log</code></td>
+              <td>Notas / datos</td>
+              <td>Se envían al Analizar junto con Detalle o Jira.</td>
+            </tr>
+            <tr>
+              <td>PNG, JPG, …</td>
+              <td>Capturas</td>
+              <td>OCR local o visión LLM si hay API key.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted small">Límite: 20 archivos de documentación, 15 MB por archivo. No: Excel, ZIP, <code>.doc</code> antiguo.</p>
+
+      <h3>Flujo Gherkin desde archivo</h3>
+      <ol class="steps">
+        <li>Arrastrá o elegí un <code>.feature</code> (o varios para lote).</li>
+        <li>Revisá la vista previa; elegí <strong>módulo destino</strong> si hace falta.</li>
+        <li><strong>Guardar prueba</strong> (un caso) o <strong>Importar como lote</strong> (varios Feature / <code># Modulo:</code>).</li>
+      </ol>
+
+      <h3>Flujo automático (con Jira)</h3>
+      <ol class="steps">
+        <li>Configurar Jira (email + token) y probar conexión.</li>
+        <li>Generar → Crear → pegar <strong>Link Jira</strong>.</li>
+        <li>(Opcional) Documentación y módulo destino.</li>
+        <li><strong>Analizar</strong> — fases: Jira/docs → Mapa → Gherkin.</li>
+        <li>Revisar preview → <strong>Guardar</strong> (crea <code>.feature</code> en <code>Features/_pruebas</code>).</li>
+        <li>Ejecutar desde Runner como cualquier otro caso.</li>
+      </ol>
+
+      <h3>Flujo manual (sin Jira)</h3>
+      <ol class="steps">
+        <li>Completar <strong>Detalle</strong> en lenguaje natural (obligatorio).</li>
+        <li>Elegir módulo destino o crear uno nuevo.</li>
+        <li>Analizar → Guardar.</li>
+      </ol>
+
+      <blockquote class="ayuda-note">
+        Al Guardar, si falta un step SpecFlow, se crea <strong>stub</strong> en <code>PruebaAutoSteps.cs</code> para completar después.
+        La regresión completa se corre desde <strong>Runner</strong>, no desde Generar.
+      </blockquote>
+    </section>
+
+    <section class="panel" id="ayuda-runneria">
+      <h2>RunnerIA — alcance limitado</h2>
+      <p class="lead">
+        Panel en <strong>Generar → RunnerIA</strong>. Solo crea y mejora casos E2E (Gherkin).
+        No es chat genérico ni modifica la app SOT.
+      </p>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead><tr><th>Sí hace</th><th>No hace</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Analizar tickets, docs, capturas → Gherkin</td>
+              <td>Chat libre / preguntas generales</td>
+            </tr>
+            <tr>
+              <td>Mapa de pantallas, OCR, LLM opcional</td>
+              <td>SQL de escritura ni comandos de sistema</td>
+            </tr>
+            <tr>
+              <td>Guardar en <code>Features/_pruebas</code></td>
+              <td>Generar código de la aplicación de negocio</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Tecnología interna</h3>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead><tr><th>Componente</th><th>Uso</th></tr></thead>
+          <tbody>
+            @for (t of iaTecnologias; track t.nombre) {
+              <tr>
+                <td><strong>{{ t.nombre }}</strong></td>
+                <td>{{ t.uso }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    }
+
+    <!-- ========== INTEGRACIONES ========== -->
+    <section class="panel" id="ayuda-jira">
+      <h2>@if (workspace.esSotAccusys()) { Jira y Xray } @else { Integraciones }</h2>
+      <h3>Jira (API token)</h3>
+      <ol class="steps">
+        <li>Configuración → <strong>Jira (Atlassian)</strong>.</li>
+        <li>Email de Atlassian.</li>
+        <li>
+          API token en
+          <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener"
+            >id.atlassian.com → API tokens</a>.
+        </li>
+        <li>Opcional: Recordar en esta sesión.</li>
+        <li><strong>Probar conexión Jira</strong>; en Generar pegar link y Analizar.</li>
+      </ol>
+      <h3>Xray</h3>
+      <p class="muted">
+        Configuración → Xray: base URL + client id/secret.
+        Las credenciales ya se pueden guardar; la sincronización automática de Test Plans se habilitará cuando la integración esté activa.
+      </p>
+      <blockquote class="ayuda-note">
+        Token Jira ≠ GitHub ≠ Cursor. No se guarda en el servidor del Runner.
+      </blockquote>
+    </section>
+
+    @if (workspace.esSotAccusys()) {
+    <section class="panel" id="ayuda-qa">
+      <h2>Ambiente QA / Auth OpenID</h2>
+      <ol class="steps">
+        <li>Configuración → Ambiente → <strong>QA</strong> (presets Accusys) o Personalizado con tu URL OpenID.</li>
+        <li>Abrir la URL Auth / <code>.well-known</code> en el navegador; aceptar aviso de certificado si aplica.</li>
+        <li>Marcar permiso Auth y <strong>Guardar configuración</strong>.</li>
+        <li>Ejecutar prueba: el login usará ese flujo si está configurado.</li>
+      </ol>
+      <p class="muted">Para demo en vivo, si QA falla por Auth, usar <strong>DEV</strong> como plan B.</p>
+    </section>
+
+    <section class="panel" id="ayuda-catalogo">
+      <h2>Catálogo / repos (célula)</h2>
+      <ol class="steps">
+        <li>Configuración → Repos: URLs TFS, usuario/PAT (PAT en secrets).</li>
+        <li><strong>Sincronizar repos</strong> (pull + índice) o <strong>Solo reindexar</strong>.</li>
+        <li>Índice en <code>AutomatizacionSOT/Catalogo/</code> — lo usa Analizar con el mapa RunnerIA.</li>
+      </ol>
+      <p class="muted">Opcional para ejecutar pruebas; útil para Generar con contexto de código actualizado.</p>
+    </section>
+    }
+
+    <!-- ========== PROBLEMAS ========== -->
+    <section class="panel" id="ayuda-problemas">
+      <h2>Problemas frecuentes</h2>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr><th>Síntoma</th><th>Causa probable</th><th>Qué hacer</th></tr>
+          </thead>
+          <tbody>
+            @for (p of problemasFrecuentes; track p.sintoma) {
+              <tr>
+                <td><strong>{{ p.sintoma }}</strong></td>
+                <td>{{ p.causa }}</td>
+                <td>{{ p.solucion }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========== TECNOLOGÍAS ========== -->
+    <section class="panel" id="ayuda-tecnologias">
+      <h2>Tecnologías</h2>
+      <p class="version-line muted small">Versión del Runner: <strong>{{ runnerVersion }}</strong></p>
+      <div class="table-wrap">
+        <table class="tech-table">
+          <thead>
+            <tr><th>Tecnología</th><th>Para qué se usa</th></tr>
+          </thead>
+          <tbody>
+            @for (t of tecnologiasVisibles(); track t.nombre) {
+              <tr>
+                <td><strong>{{ t.nombre }}</strong></td>
+                <td>{{ t.uso }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <pre class="flow-box">Jira / texto / docs  →  Generar pruebas (Runner Angular)
+        │
+        ▼
+  .feature (Gherkin / SpecFlow)
+        │
+        ▼
+   NUnit + Playwright → app en el navegador
+        │
+        ▼
+   Evidencias + informe HTML + ZIP</pre>
+    </section>
+
+    @if (workspace.esSotAccusys()) {
+    <section class="panel" id="ayuda-llm">
+      <h2>Análisis local vs LLM</h2>
+      <p class="muted">
+        Sin LLM: heurísticas + mapa + OCR. Con LLM (opcional): pulido Gherkin y visión.
+        Configuración → LLM. Key solo en sessionStorage si Recordar.
+      </p>
+    </section>
+
+    <section class="panel panel-manual" id="ayuda-manual">
+      <div class="manual-head">
+        <div>
+          <h2>Manual técnico (MANUAL.md)</h2>
+          <p class="muted small">Scripts PowerShell, appsettings, escenarios y parametrización avanzada.</p>
+        </div>
+        <div class="manual-head-actions">
+          <a class="btn-link" href="/MANUAL.md" target="_blank" rel="noopener">Abrir MANUAL.md</a>
+          <button type="button" class="btn-link" (click)="toggleManual()">
+            {{ manualExpandido() ? 'Ocultar contenido' : 'Mostrar contenido' }}
+          </button>
+        </div>
+      </div>
+      @if (status()) {
+        <div class="status-bar visible warn">{{ status() }}</div>
+      }
+      @if (manualExpandido()) {
+        <div class="manual-render" [innerHTML]="manualHtml()" (click)="onManualClick($event)"></div>
+      } @else {
+        <p class="muted">
+          El contenido completo está colapsado para no mezclar con la guía de pantalla.
+          Usá <strong>Mostrar contenido</strong> o el enlace para abrir el archivo.
+        </p>
+      }
+    </section>
+    }
+  </div>
+</div>

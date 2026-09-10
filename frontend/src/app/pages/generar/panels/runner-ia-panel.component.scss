@@ -1,0 +1,44 @@
+:host { display: block; }
+
+.runneria-solapa {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin: 0 0 16px;
+  background: var(--panel-soft);
+  overflow: hidden;
+}
+.runneria-solapa > summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.runneria-solapa > summary::-webkit-details-marker { display: none; }
+.ria-sum-title { font-weight: 800; color: var(--navy); }
+.ria-sum-meta { font-size: 12px; color: var(--muted); flex: 1; }
+.ria-chevron { font-size: 12px; color: var(--muted); }
+.ria-body { padding: 0 12px 12px; border-top: 1px solid var(--line); }
+.ria-alcance { margin: 10px 0; }
+.ria-checklist { margin-top: 8px; font-size: 13px; }
+.ria-checklist summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+}
+.ria-checklist ol {
+  margin: 6px 0 0;
+  padding-left: 1.2rem;
+  line-height: 1.45;
+}
+.hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.hint.set { color: var(--ok); font-weight: 600; }

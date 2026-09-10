@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <SotRunnerDesktopBuildRoot Condition="'$(SotRunnerDesktopBuildRoot)' == ''">$(LOCALAPPDATA)\RunnerIA\desktop\</SotRunnerDesktopBuildRoot>
+    <BaseOutputPath>$(SotRunnerDesktopBuildRoot)bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SotRunnerDesktopBuildRoot)obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+</Project>

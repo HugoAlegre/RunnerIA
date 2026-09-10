@@ -1,0 +1,32 @@
+:host {
+  display: contents;
+}
+
+.conflict-current,
+.conflict-new {
+  margin: 6px 0 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+}
+
+.conflict-foot {
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.conflict-foot .danger-btn {
+  border: 1px solid #b42318;
+  background: transparent;
+  color: #b42318;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.conflict-foot .danger-btn:hover {
+  background: color-mix(in srgb, #b42318 12%, transparent);
+}

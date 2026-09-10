@@ -1,0 +1,365 @@
+<main class="app">
+  <div class="brandbar">
+    <div class="brandbar-left">
+      <img src="logo-accusys.png" alt="Accusys" />
+      <span class="brandbar-divider" aria-hidden="true"></span>
+      <div class="brandbar-title">
+        <span class="t">RunnerIA</span>
+        <span class="s">Automatización de pruebas</span>
+        <span class="version-pill" title="Versión del Runner">{{ runnerVersionLabel }}</span>
+      </div>
+    </div>
+    <div class="brandbar-right">
+      <div
+        class="server-pill brand-pill"
+        [class.online]="api.online()"
+        [class.offline]="!api.online()"
+        [class.busy]="api.busy()"
+        [attr.title]="api.busy() ? 'Corrida en curso' : api.online() ? 'Servidor conectado' : 'Sin conexión'"
+      >
+        <span class="dot"></span>
+        <span class="brand-pill-text">
+          @if (api.busy()) { En curso }
+          @else if (api.online()) {
+            @if (preflightOk()) { Listo }
+            @else { OK }
+          }
+          @else { Offline }
+        </span>
+      </div>
+      @if (api.online() && preflightHint() && !api.busy()) {
+        <span class="preflight-hint muted small" [attr.title]="preflightHint()">{{ preflightHint() }}</span>
+      }
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="theme.toggle()"
+        [attr.title]="theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro'"
+        [attr.aria-label]="theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro'"
+      >
+        @if (theme.theme() === 'dark') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 14.3A8.5 8.5 0 0 1 9.7 3a7 7 0 1 0 11.3 11.3z"/>
+          </svg>
+        }
+      </button>
+      @if (!authBloqueado() && pinConfigurado()) {
+        <button type="button" class="icon-btn" (click)="logout()" title="Salir" aria-label="Salir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (api.online() && api.modoAyuda()) {
+    <div class="suite-banner" role="status">
+      {{ api.suiteMensaje() || 'Falta AutomatizacionSOT. Colocá la carpeta hermana junto al portable para poder correr pruebas.' }}
+    </div>
+  }
+
+  @if (!authResuelto()) {
+    <div class="auth-pending panel" aria-live="polite" aria-busy="true">
+      <p class="muted">Verificando sesión…</p>
+    </div>
+  } @else if (authBloqueado()) {
+    <div class="auth-gate panel" [class.auth-gate-wide]="authModo() === 'perfil'">
+      <div class="auth-brand">
+        <img src="logo-accusys.png" alt="" />
+        <strong>RunnerIA</strong>
+      </div>
+
+      @if (authModo() === 'perfil') {
+        <h2>¿Qué proyecto vas a usar?</h2>
+        <p class="muted">
+          Elegí un proyecto existente o creá uno nuevo. Los casos de prueba del Runner se mantienen;
+          cada proyecto define su catálogo y configuración (presets opcionales según el proyecto).
+        </p>
+
+        @if (proyectoFormModo(); as formModo) {
+          <div class="proyecto-form panel-soft">
+            <h3>{{ formModo === 'nuevo' ? 'Nuevo proyecto' : 'Modificar proyecto' }}</h3>
+            @if (formModo === 'nuevo') {
+              <div class="cliente-field">
+                <label>Id (opcional)</label>
+                <input type="text" [(ngModel)]="proyectoFormId" placeholder="auto si vacío" [disabled]="perfilBusy()" />
+              </div>
+            }
+            <div class="cliente-field">
+              <label>Nombre</label>
+              <input type="text" [(ngModel)]="proyectoFormNombre" [disabled]="perfilBusy()" />
+            </div>
+            <div class="cliente-field">
+              <label>Descripción</label>
+              <textarea rows="2" [(ngModel)]="proyectoFormDescripcion" [disabled]="perfilBusy()"></textarea>
+            </div>
+            <div class="cliente-field">
+              <label>Nombre IA</label>
+              <input type="text" [(ngModel)]="proyectoFormIaNombre" [disabled]="perfilBusy()" />
+            </div>
+            @if (proyectoFormModo() === 'nuevo') {
+              <div class="cliente-field">
+                <label>Plantilla</label>
+                <select [(ngModel)]="proyectoFormPlantilla" [disabled]="perfilBusy()">
+                  <option value="generico">Genérico (URL, BD, Jira/Xray editables)</option>
+                  <option value="sot">SOT Accusys (presets caja bancaria)</option>
+                </select>
+              </div>
+            }
+            @if (!esPlantillaSotForm()) {
+              <div class="integraciones-proyecto">
+                <div class="integraciones-head">
+                  <strong>Integraciones del proyecto</strong>
+                  <button type="button" class="btn-link-text" (click)="agregarIntegracionProyecto()" [disabled]="perfilBusy()">
+                    + Agregar
+                  </button>
+                </div>
+                <p class="muted small">URL de la app, base de datos, Jira, Xray u otras herramientas de casos de prueba.</p>
+                @for (integ of proyectoFormIntegraciones; track integ.id; let idx = $index) {
+                  <div class="integracion-row panel-soft">
+                    <select [(ngModel)]="integ.tipo" [disabled]="perfilBusy()">
+                      @for (t of integracionTipos; track t.id) {
+                        <option [value]="t.id">{{ t.label }}</option>
+                      }
+                    </select>
+                    <input type="text" [(ngModel)]="integ.etiqueta" placeholder="Etiqueta" [disabled]="perfilBusy()" />
+                    <input type="text" [(ngModel)]="integ.url" placeholder="URL o host" [disabled]="perfilBusy()" />
+                    <button type="button" class="btn-link-text danger" (click)="quitarIntegracionProyecto(idx)" [disabled]="perfilBusy()">Quitar</button>
+                  </div>
+                }
+              </div>
+            }
+            <div class="actions">
+              <button type="button" class="primary" (click)="guardarFormProyecto()" [disabled]="perfilBusy()">
+                {{ perfilBusy() ? '…' : 'Guardar' }}
+              </button>
+              <button type="button" (click)="cancelarFormProyecto()" [disabled]="perfilBusy()">Cancelar</button>
+            </div>
+          </div>
+        } @else {
+          @if (proyectos().length) {
+            <div class="perfil-cards">
+              @for (p of proyectos(); track p.id) {
+                <button
+                  type="button"
+                  class="perfil-card"
+                  [class.active]="proyectoSeleccionadoId() === p.id"
+                  [disabled]="perfilBusy()"
+                  (click)="seleccionarProyecto(p.id)"
+                >
+                  <strong>{{ p.nombre }}</strong>
+                  <span
+                    class="proyecto-card-badge"
+                    [class.sot]="p.plantilla === 'sot' || (!p.plantilla && p.id === 'sot-caja')"
+                  >
+                    {{ p.plantilla === 'sot' || (!p.plantilla && p.id === 'sot-caja') ? 'SOT Accusys' : 'Genérico' }}
+                  </span>
+                  @if (p.descripcion) {
+                    <span>{{ p.descripcion }}</span>
+                  } @else {
+                    <span class="muted small">id: {{ p.id }}</span>
+                  }
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="muted">No hay proyectos. Creá uno con «Nuevo proyecto».</p>
+          }
+
+          <div class="actions proyecto-actions">
+            <button type="button" class="primary" (click)="entrarConProyecto()" [disabled]="perfilBusy() || !proyectoSeleccionadoId()">
+              {{ perfilBusy() ? '…' : 'Entrar' }}
+            </button>
+            <button type="button" (click)="abrirFormNuevoProyecto()" [disabled]="perfilBusy()">Nuevo proyecto</button>
+            <button type="button" (click)="abrirFormEditarProyecto()" [disabled]="perfilBusy() || !proyectoSeleccionadoId()">
+              Modificar
+            </button>
+            <button
+              type="button"
+              class="danger-btn"
+              (click)="pedirEliminarProyecto()"
+              [disabled]="perfilBusy() || !proyectoSeleccionadoId() || proyectos().length <= 1"
+            >
+              Eliminar
+            </button>
+          </div>
+        }
+        <p class="muted small">Podés cambiar el proyecto activo desde Generar → RunnerIA o Configuración.</p>
+      }
+
+      @if (authModo() === 'login' || authModo() === 'setup') {
+        <h2>{{ pinConfigurado() ? 'Iniciar sesión' : 'Configurar PIN' }}</h2>
+        <p class="muted">
+          Acceso local del equipo.
+          @if (pinVencimientoHabilitado()) {
+            El PIN caduca cada 3 meses.
+          } @else {
+            PIN predeterminado: <strong>{{ pinPredeterminado() }}</strong> (vencimiento desactivado).
+          }
+          @if (!pinConfigurado()) {
+            Podés dejar el predeterminado o elegir otro (mín. 4 caracteres).
+          }
+        </p>
+        <app-password-field
+          label="PIN"
+          name="pin"
+          autocomplete="current-password"
+          [holdToReveal]="true"
+          [(value)]="pinInput"
+          (enter)="enviarAuth()"
+        />
+        @if (!pinConfigurado()) {
+          <app-password-field
+            label="Confirmar PIN"
+            name="pin-confirm"
+            [holdToReveal]="true"
+            [(value)]="pinConfirmInput"
+            (enter)="enviarAuth()"
+          />
+        }
+        <div class="actions">
+          <button type="button" class="primary" (click)="enviarAuth()" [disabled]="authBusy()">
+            {{ authBusy() ? '…' : (pinConfigurado() ? 'Entrar' : 'Guardar PIN y entrar') }}
+          </button>
+        </div>
+        @if (pinConfigurado()) {
+          <button type="button" class="linkish" (click)="abrirOlvido()">Me olvidé la contraseña</button>
+        }
+      }
+
+      @if (authModo() === 'forceChange') {
+        <h2>Cambiar PIN</h2>
+        <p class="muted">Tu PIN tiene más de 3 meses. Ingresá el actual y el nuevo.</p>
+        <app-password-field
+          label="PIN actual"
+          name="pin-actual"
+          autocomplete="current-password"
+          [holdToReveal]="true"
+          [(value)]="pinActualInput"
+        />
+        <app-password-field
+          label="PIN nuevo"
+          name="pin-nuevo"
+          [holdToReveal]="true"
+          [(value)]="pinNuevoInput"
+        />
+        <app-password-field
+          label="Confirmar PIN nuevo"
+          name="pin-nuevo-confirm"
+          [holdToReveal]="true"
+          [(value)]="pinConfirmInput"
+          (enter)="cambiarPinForzado()"
+        />
+        <div class="actions">
+          <button type="button" class="primary" (click)="cambiarPinForzado()" [disabled]="authBusy()">
+            {{ authBusy() ? '…' : 'Guardar nuevo PIN' }}
+          </button>
+        </div>
+        <button type="button" class="linkish" (click)="abrirOlvido()">Me olvidé la contraseña</button>
+      }
+
+      @if (authModo() === 'forgot') {
+        <h2>Recuperar acceso</h2>
+        <p class="muted">
+          Enviaremos una clave temporal
+          @if (recoveryEmailMascara()) {
+            a {{ recoveryEmailMascara() }}.
+          } @else {
+            al correo configurado en secrets.
+          }
+        </p>
+        <div class="cliente-field">
+          <label>Email de recuperación</label>
+          <input type="email" [(ngModel)]="recoveryEmailInput" autocomplete="email" placeholder="mismo correo del servidor" />
+        </div>
+        <div class="actions">
+          <button type="button" class="primary" (click)="enviarClaveRecuperacion()" [disabled]="authBusy()">
+            {{ authBusy() ? '…' : 'Enviar clave por email' }}
+          </button>
+        </div>
+        @if (authInfo()) {
+          <div class="auth-info">{{ authInfo() }}</div>
+        }
+        <hr class="auth-sep" />
+        <p class="muted">Con la clave recibida, definí el PIN nuevo:</p>
+        <div class="cliente-field">
+          <label>Clave del email</label>
+          <input type="text" [(ngModel)]="codigoRecuperacion" autocomplete="one-time-code" />
+        </div>
+        <app-password-field
+          label="PIN nuevo"
+          name="pin-reset"
+          [holdToReveal]="true"
+          [(value)]="pinNuevoInput"
+        />
+        <app-password-field
+          label="Confirmar PIN nuevo"
+          name="pin-reset-confirm"
+          [holdToReveal]="true"
+          [(value)]="pinConfirmInput"
+          (enter)="restablecerConClave()"
+        />
+        <div class="actions">
+          <button type="button" class="primary" (click)="restablecerConClave()" [disabled]="authBusy()">
+            {{ authBusy() ? '…' : 'Restablecer PIN' }}
+          </button>
+        </div>
+        <button type="button" class="linkish" (click)="volverLogin()">Volver al inicio de sesión</button>
+      }
+
+      @if (authError()) {
+        <div class="auth-err">{{ authError() }}</div>
+      }
+    </div>
+  } @else {
+    <div class="topbar">
+      <nav class="nav" aria-label="Secciones">
+      <a routerLink="/runner" routerLinkActive="active" (click)="setSub('/runner')">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        Runner
+      </a>
+      <a routerLink="/generar" routerLinkActive="active" (click)="setSub('/generar')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"/><path d="M19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14z"/></svg>
+        Generar
+      </a>
+      <a routerLink="/config" routerLinkActive="active" (click)="setSub('/config')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+        Configuración
+      </a>
+      <a routerLink="/ayuda" routerLinkActive="active" (click)="setSub('/ayuda')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Ayuda
+      </a>
+      </nav>
+      <p class="topbar-sub" id="headerSubtitle">
+        {{ subtitulo }}
+        <span class="topbar-version muted small">· {{ runnerVersionLabel }}</span>
+      </p>
+    </div>
+
+    <router-outlet />
+  }
+
+  <div class="toast-host" aria-live="polite">
+    @for (t of toast.items(); track t.id) {
+      <div class="toast" [attr.data-tipo]="t.tipo" (click)="toast.dismiss(t.id)">
+        {{ t.mensaje }}
+      </div>
+    }
+  </div>
+
+  <app-confirm-dialog
+    [open]="eliminarProyectoDialog()"
+    title="Eliminar proyecto"
+    [body]="eliminarProyectoBody()"
+    confirmLabel="Eliminar"
+    cancelLabel="Cancelar"
+    [danger]="true"
+    (closed)="confirmarEliminarProyecto($event)"
+  />
+</main>

@@ -1,0 +1,344 @@
+<section class="layout">
+  <aside class="panel panel-nav">
+    <div class="nav-section-label">Módulos y pruebas</div>
+    <input
+      type="search"
+      class="scenario-search"
+      placeholder="Buscar módulo o prueba…"
+      [ngModel]="filtro()"
+      (ngModelChange)="filtro.set($event)"
+      autocomplete="off"
+    />
+
+    <div class="modulos-tree">
+      @for (c of modulosVisibles(); track c.id) {
+        <div class="modulo" [class.abierto]="moduloAbierto(c.id)" [class.activo]="esModuloActivo(c.id)">
+          <button
+            type="button"
+            class="modulo-head"
+            [attr.aria-expanded]="moduloAbierto(c.id)"
+            [attr.title]="c.sub"
+            (click)="seleccionarModulo(c.id)"
+          >
+            <span class="modulo-chev" aria-hidden="true">▸</span>
+            <span class="modulo-text">
+              <span class="modulo-nombre">{{ c.nombre }}</span>
+              <span class="modulo-sub">{{ c.sub }}</span>
+            </span>
+            <span class="modulo-count">{{ pruebasDe(c).length }}</span>
+          </button>
+
+          @if (moduloAbierto(c.id)) {
+            <div class="modulo-body">
+              @for (id of pruebasDe(c); track id) {
+                <button
+                  type="button"
+                  class="scenario-item"
+                  [class.active]="esPruebaActiva(c.id, id)"
+                  (click)="elegirPrueba(c.id, id)"
+                >
+                  <span class="scenario-label">
+                    <span class="scenario-text">{{ tituloVisible(catalog.escenarios()[id], id) }}</span>
+                  </span>
+                  <span class="esc-badge-wrap">
+                    <span class="esc-badge" [attr.data-estado]="badge(id)">
+                      @switch (badge(id)) {
+                        @case ('ok') { OK }
+                        @case ('fail') { Falló }
+                        @default { — }
+                      }
+                    </span>
+                    @if (ultimaCorridaTexto(id); as cuando) {
+                      <span class="scenario-ultima">Última: {{ cuando }}</span>
+                    }
+                  </span>
+                </button>
+              } @empty {
+                <p class="muted small">Sin pruebas visibles.</p>
+              }
+            </div>
+          }
+        </div>
+      } @empty {
+        <p class="muted small">Sin coincidencias.</p>
+      }
+    </div>
+
+    <div class="regresion-mini">
+      <button
+        type="button"
+        class="primary"
+        [disabled]="runs.enCurso() || !catalog.countPruebasRegresion()"
+        [attr.title]="!catalog.countPruebasRegresion() ? 'No hay pruebas en Correr todo (fuera de Release 9)' : runs.enCurso() ? 'Hay una corrida en curso' : 'Regresión completa (cat-regresion-pruebas). Distinto de la regresión del módulo activo.'"
+        (click)="ejecutarRegresionCompleta()"
+      >
+        Correr todo ({{ catalog.countPruebasRegresion() }})
+      </button>
+      <button
+        type="button"
+        class="btn-run-secondary"
+        [disabled]="runs.enCurso()"
+        title="Compila y lista tests — no abre SOT; útil antes de corridas largas"
+        (click)="probarPipelineRunner()"
+      >
+        Comprobar instalación
+      </button>
+      @if (!runs.enCurso() && runs.fase() !== 'idle') {
+        <button
+          type="button"
+          class="btn-run-secondary"
+          title="Liberar estado local si los botones quedaron bloqueados"
+          (click)="liberarCorridaLocal()"
+        >
+          Liberar corrida
+        </button>
+      }
+    </div>
+  </aside>
+
+  <section class="panel detail">
+    @if (runs.enCurso() || runs.cola().length) {
+      <div class="run-queue-panel" role="status" aria-label="Cola de ejecución">
+        <div class="run-queue-head">
+          <strong>Cola de ejecución</strong>
+          @if (runs.cola().length) {
+            <button type="button" class="btn-link-quiet" (click)="vaciarColaPendiente()">Vaciar cola</button>
+          }
+        </div>
+        <ol class="run-queue-list">
+          @if (runs.enCurso()) {
+            <li class="run-queue-item active">
+              <span class="run-queue-pos">1</span>
+              <span class="run-queue-estado">En ejecución</span>
+              <span class="run-queue-titulo">{{ runs.faseTitulo() || 'Corrida activa' }}</span>
+            </li>
+          }
+          @for (item of runs.cola(); track item.colaId; let i = $index) {
+            <li class="run-queue-item">
+              <span class="run-queue-pos">{{ (runs.enCurso() ? 2 : 1) + i }}</span>
+              <span class="run-queue-estado">En cola</span>
+              <span class="run-queue-titulo">{{ item.titulo }}</span>
+              <button
+                type="button"
+                class="run-queue-remove"
+                title="Quitar de la cola"
+                (click)="quitarDeCola(item.colaId)"
+              >×</button>
+            </li>
+          }
+        </ol>
+      </div>
+    }
+
+    @if (runs.enCurso()) {
+      <div class="corrida-activa-alert" role="status">
+        Hay una prueba en ejecución. Podés encolar otra o detener la actual desde Ejecutar.
+      </div>
+    }
+
+    @if (esc(); as e) {
+      <div class="detail-head caso-detalle">
+        <h2 class="caso-titulo-principal">{{ tituloCaso(e, catalog.escenarioId() ?? undefined) }}</h2>
+        @if (detalleCaso(e); as det) {
+          <p class="caso-descripcion">{{ det }}</p>
+        }
+      </div>
+      <div class="info-grid info-grid-caso">
+        <div class="info"><small>Ambiente</small><strong>{{ ambiente() }}</strong></div>
+        <div class="info"><small>Resultado esperado</small><strong>{{ e.resultado || '—' }}</strong></div>
+      </div>
+
+      @if (muestraCajasSc416()) {
+        <div class="cajas-usadas highlight-panel">
+          <div class="cajas-usadas-title">Cajas utilizadas (editables en Config → SC-416)</div>
+          <div class="cajas-chips">
+            <span class="caja-chip sin-nota"><strong>Compensada</strong> {{ cajaCompensada() }} · SIN Nota</span>
+            <span class="caja-chip con-nota"><strong>Normal</strong> {{ cajaNormal() }} · CON Nota</span>
+            <span class="caja-chip con-nota"><strong>MiniBóveda</strong> {{ cajaMiniBoveda() }} · CON Nota</span>
+          </div>
+        </div>
+      }
+
+      @if (e.evidencias?.length) {
+        <div class="checks-block">
+          <div class="checks-title">Evidencias esperadas</div>
+          <div class="checks">
+            @for (ev of e.evidencias; track ev) {
+              <div class="check evidencia-item"><span>{{ ev }}</span></div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="actions actions-run">
+        <button
+          type="button"
+          class="primary btn-run"
+          [disabled]="!esc()"
+          [attr.title]="esRegresionModuloEscenario(e, catalog.escenarioId()) ? 'Regresión del módulo + Excel/ZIP QA' : (escenarioEntregaQaExcel(e, catalog.escenarioId(), catalog.categoriaId()) ? 'Ejecutar + Excel QA embebido' : 'Ejecutar esta prueba')"
+          (click)="confirmarEjecutar()"
+        >Ejecutar</button>
+        @if (esEscenarioSc476(catalog.escenarioId())) {
+          <button
+            type="button"
+            title="Descargar Excel y ZIP con los 12 casos Xray desde casos.json"
+            (click)="descargarEntregaQaDesdeCasosJson('SC-476')"
+          >Descargar Excel QA (12 casos)</button>
+        }
+        @if (runs.enCurso()) {
+          <button
+            type="button"
+            class="btn-detener"
+            title="Detiene la corrida actual"
+            (click)="detenerPruebas()"
+          >Detener pruebas</button>
+        }
+      </div>
+    } @else if (cat() && pruebasDe(cat()!).length === 0) {
+      <p class="muted">Este módulo no tiene pruebas visibles. Podés gestionarlas en <strong>Generar pruebas</strong>.</p>
+    } @else if (!cat()) {
+      <h2>Sin módulo</h2>
+      <p>Seleccioná un módulo en el panel izquierdo para ver su descripción y las pruebas disponibles.</p>
+    }
+
+    @if (statusMsg()) {
+      <div class="status-bar visible mt-sm" [ngClass]="statusTipo()">{{ statusMsg() }}</div>
+    }
+
+    @if (excelModuloBlob() || zipModuloBlob()) {
+      <div class="excel-mod-box">
+        <div class="excel-mod-box-title">Entrega QA de la corrida</div>
+        <div class="actions mt-sm">
+          @if (excelModuloBlob()) {
+            <button type="button" class="primary" (click)="descargarExcelModuloManual()">
+              Descargar Excel (casos + evidencias + queries)
+            </button>
+          }
+          @if (zipModuloBlob()) {
+            <button type="button" (click)="descargarZipModuloManual()">Descargar ZIP QA</button>
+          }
+        </div>
+        <span class="muted small">
+          @if (excelModuloNombre()) {
+            {{ excelModuloNombre() }}
+          }
+          @if (zipModuloNombre()) {
+            @if (excelModuloNombre()) { · }
+            {{ zipModuloNombre() }}
+          }
+        </span>
+      </div>
+    }
+
+    @if (runs.fase() !== 'idle') {
+      <div class="run-progress visible" [class]="runs.fase()" [class.sticky-run]="runs.enCurso()">
+        <div class="run-progress-main">
+          <div class="run-progress-phase">
+            @if (runs.fase() === 'ok' || runs.fase() === 'fail' || runs.fase() === 'empty') {
+              {{ runs.finEtiqueta() || 'Finalizó' }}
+            } @else {
+              @switch (runs.fase()) {
+                @case ('loading') { Cargando ejecución }
+                @case ('running') { En ejecución }
+              }
+            }
+          </div>
+          <p class="run-progress-title">{{ runs.faseTitulo() }}</p>
+          @if (runs.faseSub()) {
+            <p class="run-progress-sub">{{ runs.faseSub() }}</p>
+          }
+          @if (runs.enCurso()) {
+            <div class="run-spinner" aria-hidden="true"></div>
+            <div class="actions mt-sm">
+              <button type="button" class="btn-detener" (click)="detenerPruebas()">Detener pruebas</button>
+            </div>
+          }
+          @if ((runs.fase() === 'ok' || runs.fase() === 'fail') && tieneInforme()) {
+            <div class="actions mt-sm">
+              <button type="button" class="primary" (click)="irAlInformeEmbed()">Ver informe</button>
+            </div>
+          }
+          @if (runs.log()) {
+            <details class="run-log-fold visible" [open]="runs.fase() === 'fail' || runs.fase() === 'empty'">
+              <summary>Detalle técnico (opcional)</summary>
+              <pre class="log-panel visible">{{ runs.log() }}</pre>
+            </details>
+          }
+        </div>
+      </div>
+    }
+
+    @if (corridaEvidencia(); as u) {
+      <div id="evidenciaBox" class="evidencia-actions" [class.is-fail]="u.ok === false" [class.is-error-proceso]="u.errorProceso" [class.is-empty]="u.corridaVacia">
+        <div class="evidencia-actions-title">
+          @if (u.corridaVacia) {
+            Sin pruebas · Última de este escenario
+          } @else if (u.ok) {
+            OK · Última de este escenario
+          } @else if (u.errorProceso) {
+            Error de ejecución · Última de este escenario
+          } @else {
+            Fallas · Última de este escenario
+          }
+          @if (esc(); as escAct) {
+            <span class="evidencia-esc-titulo"> — {{ tituloVisible(escAct) }}</span>
+          }
+        </div>
+        <div class="actions mt-sm">
+          <button type="button" class="primary" [disabled]="!tieneInforme()" (click)="irAlInformeEmbed()">Ver informe HTML</button>
+          <button type="button" [disabled]="!tieneInforme()" (click)="verInforme()">Abrir en pestaña</button>
+          <a
+            class="btn-link"
+            [class.is-disabled]="!u.tieneEvidencia"
+            [href]="zipUrl()"
+            [attr.download]="runs.nombreZip(u)"
+            (click)="descargarZipManual(); $event.preventDefault()"
+          >Descargar ZIP (incluye informe HTML)</a>
+        </div>
+        @if (u.tieneEvidencia) {
+          <details class="evidencia-ruta-fold">
+            <summary>Detalle de descarga</summary>
+            <p class="evidencia-ruta">ZIP: {{ runs.nombreZip(u) }}</p>
+            <p class="evidencia-ruta">Incluye carpeta de evidencias + Informes/ReporteEjecucion.html</p>
+          </details>
+        } @else {
+          <p class="evidencia-ruta">Última corrida de este escenario sin carpeta de evidencia.</p>
+        }
+        @if (mostrarInformeEmbed()) {
+          <div class="informe-embed-wrap">
+            <div class="informe-embed-head">
+              <strong>Informe paso a paso</strong>
+              <button type="button" class="btn-link-quiet" (click)="mostrarInformeEmbed.set(false)">Ocultar</button>
+            </div>
+            @if (informeBlobSafe(); as url) {
+              <iframe
+                class="informe-frame"
+                [src]="url"
+                title="Informe"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-downloads"
+              ></iframe>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="evidencia-empty">
+        Ejecutá este escenario para guardar su última corrida e informe HTML.
+      </div>
+    }
+  </section>
+</section>
+<app-confirm-dialog
+  [open]="dialogOpen()"
+  [title]="dialogTitle()"
+  [body]="dialogBody()"
+  [confirmLabel]="dialogConfirmLabel()"
+  mode="confirm"
+  (closed)="closeDialog($event)"
+/>
+<app-run-conflict-dialog
+  [open]="conflictOpen()"
+  [tituloActual]="conflictTituloActual()"
+  [tituloNueva]="conflictTituloNueva()"
+  (closed)="closeConflict($event)"
+/>

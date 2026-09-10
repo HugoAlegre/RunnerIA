@@ -1,0 +1,21 @@
+@if (open) {
+  <div class="sot-dialog open" role="dialog" aria-modal="true" (click)="onBackdrop()">
+    <div class="sot-dialog-card danger" (click)="$event.stopPropagation()">
+      <div class="sot-dialog-head">
+        <div class="eyebrow">Ejecución</div>
+        <h3>Prueba en ejecución</h3>
+      </div>
+      <div class="sot-dialog-body">
+        <p>Ya hay una corrida en curso:</p>
+        <p class="conflict-current"><strong>{{ tituloActual || 'Corrida activa' }}</strong></p>
+        <p>Querés lanzar:</p>
+        <p class="conflict-new"><strong>{{ tituloNueva || 'Nueva prueba' }}</strong></p>
+      </div>
+      <div class="sot-dialog-foot conflict-foot">
+        <button type="button" (click)="cancel()">Cancelar</button>
+        <button type="button" class="danger-btn" (click)="stopAndRun()">Detener e iniciar esta</button>
+        <button type="button" class="primary" (click)="enqueue()">Agregar a cola</button>
+      </div>
+    </div>
+  </div>
+}

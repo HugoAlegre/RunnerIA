@@ -1,0 +1,281 @@
+<div class="crear-form">
+
+  <div class="form-grid">
+
+    <div class="cliente-field">
+
+      <label>Link Jira (opcional)</label>
+
+      <input
+
+        type="url"
+
+        [ngModel]="jiraUrl"
+
+        (ngModelChange)="jiraUrlChange.emit($event)"
+
+        placeholder="https://…atlassian.net/browse/SC-…"
+
+      />
+
+    </div>
+
+    <div class="cliente-field">
+
+      <label>Nombre de la prueba <span class="hint-inline">(opcional)</span></label>
+
+      <input
+
+        type="text"
+
+        [ngModel]="nombreFeature"
+
+        (ngModelChange)="nombreFeatureChange.emit($event)"
+
+        placeholder="Se propone desde Jira/docs"
+
+      />
+
+    </div>
+
+    <div class="cliente-field full">
+
+      <label>Detalle <span class="hint-inline">{{ detalleChars }} caracteres</span></label>
+
+      <textarea
+
+        rows="6"
+
+        [ngModel]="detalle"
+
+        (ngModelChange)="detalleChange.emit($event)"
+
+        placeholder="Qué probar, en lenguaje natural (pasos, COBIS/SQL, pantallas…)"
+
+      ></textarea>
+
+    </div>
+
+    <div class="cliente-field full">
+
+      <label>Notas extra <span class="hint-inline">(opcional)</span></label>
+
+      <textarea
+
+        rows="2"
+
+        [ngModel]="texto"
+
+        (ngModelChange)="textoChange.emit($event)"
+
+        placeholder="Importes, excepciones…"
+
+      ></textarea>
+
+    </div>
+
+    <div class="cliente-field full">
+
+      <label>Archivos <span class="hint-inline">(arrastrar o elegir)</span></label>
+
+      <div
+
+        class="upload-dropzone"
+
+        [class.drag-over]="dragOver"
+
+        (dragover)="onDragOver($event)"
+
+        (dragleave)="onDragLeave($event)"
+
+        (drop)="onDrop($event)"
+
+      >
+
+        <p class="dropzone-title">Arrastrá archivos acá o elegí desde el disco</p>
+
+        <p class="dropzone-hint">
+
+          <strong>Gherkin:</strong> archivo <code>.feature</code>.
+
+          <strong>Docs:</strong> PDF, Word (<code>.docx</code>), TXT, MD, JSON, CSV, LOG.
+
+          <strong>Capturas:</strong> PNG/JPG (OCR/LLM al Analizar).
+
+        </p>
+
+        <p class="dropzone-warn muted small">No soportado: .doc antiguo, Excel, ZIP.</p>
+
+        <div class="docs-toolbar">
+
+          <input
+
+            #docsInput
+
+            type="file"
+
+            multiple
+
+            [accept]="acceptArchivos"
+
+            (change)="onFileInputChange($event)"
+
+            class="docs-input-hidden"
+
+          />
+
+          <button type="button" (click)="docsInput.click()">
+
+            {{ docs.length ? 'Agregar más' : 'Elegir archivos' }}
+
+          </button>
+
+          @if (docs.length) {
+
+            <button type="button" (click)="limpiarDocs.emit()">Quitar docs ({{ docs.length }})</button>
+
+          }
+
+        </div>
+
+      </div>
+
+      @if (docs.length) {
+
+        <ul class="docs-list">
+
+          @for (f of docs; track f.name + f.size + f.lastModified; let i = $index) {
+
+            <li>
+
+              <span>
+
+                <strong>{{ i + 1 }}.</strong> {{ f.name }}
+
+                <span class="file-badge" [attr.data-tipo]="badgeDoc(f.name)">{{ badgeDoc(f.name) }}</span>
+
+              </span>
+
+              <button type="button" class="btn-link-text danger" (click)="quitarDoc.emit(i)">Quitar</button>
+
+            </li>
+
+          }
+
+        </ul>
+
+      }
+
+    </div>
+
+    <div class="cliente-field full">
+
+      <label>Módulo destino</label>
+
+      <select [ngModel]="grupoId" (ngModelChange)="grupoIdChange.emit($event)">
+
+        <option value="__auto__">— Automático —</option>
+
+        <option value="__nuevo__">— Crear módulo nuevo —</option>
+
+        <optgroup label="Módulos existentes">
+
+          @for (g of destinos; track g.id) {
+
+            <option [value]="g.id">{{ g.nombre }}{{ g.fijo ? ' · suite' : ' · testing' }}</option>
+
+          }
+
+        </optgroup>
+
+      </select>
+
+      <span class="hint">Destino: <strong>{{ destinoLabel }}</strong></span>
+
+    </div>
+
+    @if (grupoId === '__nuevo__') {
+
+      <div class="cliente-field">
+
+        <label>Nombre del módulo nuevo</label>
+
+        <input
+
+          type="text"
+
+          [ngModel]="grupoNuevo"
+
+          (ngModelChange)="grupoNuevoChange.emit($event)"
+
+          placeholder="Ej. Smoke cierre"
+
+        />
+
+      </div>
+
+    }
+
+    @if (grupoId === '__auto__' && moduloSugerido) {
+
+      <div class="cliente-field full">
+
+        <span class="hint set">Sugerido: <strong>{{ moduloSugerido }}</strong></span>
+
+      </div>
+
+    }
+
+  </div>
+
+
+
+  <div class="actions mt-md actions-cta">
+
+    <button
+
+      type="button"
+
+      class="cta-main"
+
+      [class.primary]="!tienePreview"
+
+      [disabled]="analizando"
+
+      (click)="analizar.emit()"
+
+    >{{ analizando ? 'Analizando…' : (tienePreview ? 'Re-analizar' : 'Analizar') }}</button>
+
+    <button type="button" class="cta-secondary" (click)="limpiar.emit()">Limpiar</button>
+
+  </div>
+
+  @if (!tienePreview && !analizando) {
+
+    <p class="cta-hint">Paso 1: subí un <code>.feature</code> o generá el borrador con <strong>Analizar</strong>.</p>
+
+  }
+
+  @if (analizando || faseAnalizar === 'listo') {
+
+    <div class="analizar-phases">
+
+      <span [class.on]="faseAnalizar === 'jira'" [class.done]="faseAnalizar === 'mapa' || faseAnalizar === 'gherkin' || faseAnalizar === 'listo'">Jira / docs</span>
+
+      <span [class.on]="faseAnalizar === 'mapa'" [class.done]="faseAnalizar === 'gherkin' || faseAnalizar === 'listo'">Mapa</span>
+
+      <span [class.on]="faseAnalizar === 'gherkin'" [class.done]="faseAnalizar === 'listo'">Gherkin</span>
+
+    </div>
+
+  }
+
+  @if (status) {
+
+    <div class="status-bar visible mt-sm" [ngClass]="statusTipo">{{ status }}</div>
+
+  }
+
+</div>
+
+

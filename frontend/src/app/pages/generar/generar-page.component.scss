@@ -1,0 +1,18 @@
+:host { display: block; }
+.muted { color: var(--muted); }
+.lead-short {
+  margin: 0 0 14px;
+  line-height: 1.45;
+  font-size: 13px;
+}
+.lead-short a { color: var(--accent); font-weight: 600; }
+
+.crear-split {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .crear-split { grid-template-columns: 1fr; }
+}

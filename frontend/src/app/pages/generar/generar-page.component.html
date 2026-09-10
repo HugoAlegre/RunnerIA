@@ -1,0 +1,157 @@
+<div class="panel" id="formGenerar">
+  <h2>Generar pruebas</h2>
+  <p class="muted lead-short">
+    <strong>Analizar</strong> → revisar → <strong>Guardar</strong>.
+    Proyecto: <em>{{ proyectoNombre || 'activo' }}</em>
+    · <a routerLink="/ayuda" fragment="ayuda-generar">Ayuda</a>
+  </p>
+
+  <div class="page-tabs" role="tablist">
+    <button type="button" role="tab" [class.active]="tab() === 'crear'" (click)="tab.set('crear')">Crear</button>
+    <button type="button" role="tab" [class.active]="tab() === 'modulos'" (click)="tab.set('modulos')">Módulos</button>
+  </div>
+
+  @if (tab() === 'crear') {
+    @if (proyectoFormModo(); as formModo) {
+      <div class="proyecto-form-inline panel-soft">
+        <h3>{{ formModo === 'nuevo' ? 'Nuevo proyecto' : 'Modificar proyecto' }}</h3>
+        @if (formModo === 'nuevo') {
+          <div class="cliente-field">
+            <label>Id (opcional)</label>
+            <input type="text" [(ngModel)]="proyectoFormId" [disabled]="riaGuardando()" />
+          </div>
+        }
+        <div class="cliente-field">
+          <label>Nombre</label>
+          <input type="text" [(ngModel)]="proyectoFormNombre" [disabled]="riaGuardando()" />
+        </div>
+        <div class="cliente-field">
+          <label>Descripción</label>
+          <textarea rows="2" [(ngModel)]="proyectoFormDescripcion" [disabled]="riaGuardando()"></textarea>
+        </div>
+        <div class="cliente-field">
+          <label>Nombre IA</label>
+          <input type="text" [(ngModel)]="proyectoFormIaNombre" [disabled]="riaGuardando()" />
+        </div>
+        <div class="actions">
+          <button type="button" class="primary" (click)="guardarFormProyecto()" [disabled]="riaGuardando()">Guardar</button>
+          <button type="button" (click)="cancelarFormProyecto()" [disabled]="riaGuardando()">Cancelar</button>
+        </div>
+      </div>
+    }
+
+    <app-runner-ia-panel
+      [open]="runnerIaOpen()"
+      [proyectoNombre]="proyectoNombre"
+      [proyectoActivoId]="proyectoActivoId"
+      [proyectos]="proyectos"
+      [checklist]="checklist"
+      [iaAlcanceTexto]="iaAlcanceTexto"
+      [descripcionProyecto]="descripcionProyecto"
+      [guardando]="riaGuardando()"
+      [mapaHint]="mapaIaHint()"
+      [status]="riaStatus()"
+      [statusTipo]="riaStatusTipo()"
+      (openChange)="runnerIaOpen.set($event)"
+      (proyectoChange)="proyectoActivoId = $event; onProyectoChange()"
+      (reentrenar)="reentrenarMapaIa()"
+      (nuevoProyecto)="abrirFormNuevoProyecto()"
+      (modificarProyecto)="abrirFormEditarProyecto()"
+      (eliminarProyecto)="pedirEliminarProyecto()"
+    />
+
+    <div class="crear-split">
+      <app-crear-feature-form
+        [jiraUrl]="jiraUrl"
+        [nombreFeature]="nombreFeature"
+        [detalle]="detalle"
+        [texto]="texto"
+        [grupoId]="grupoId"
+        [grupoNuevo]="grupoNuevo"
+        [moduloSugerido]="moduloSugerido"
+        [destinos]="destinosModulos"
+        [destinoLabel]="destinoLabel"
+        [docs]="docs"
+        [analizando]="analizando()"
+        [faseAnalizar]="faseAnalizar()"
+        [status]="status()"
+        [statusTipo]="statusTipo()"
+        [tienePreview]="tienePreview"
+        (jiraUrlChange)="jiraUrl = $event; onJiraUrlChange()"
+        (nombreFeatureChange)="nombreFeature = $event"
+        (detalleChange)="detalle = $event"
+        (textoChange)="texto = $event"
+        (grupoIdChange)="grupoId = $event"
+        (grupoNuevoChange)="grupoNuevo = $event"
+        (archivosRecibidos)="onArchivosRecibidos($event)"
+        (quitarDoc)="quitarDoc($event)"
+        (limpiarDocs)="limpiarDocs()"
+        (analizar)="analizar()"
+        (limpiar)="limpiar()"
+      />
+
+      <app-gherkin-preview
+        [featurePreview]="featurePreview"
+        [editandoArchivo]="editandoArchivo"
+        [origenArchivo]="gherkinOrigenArchivo"
+        [mostrarImportarLote]="mostrarImportarLoteVisible"
+        [forzarIncompleto]="forzarIncompleto"
+        [sobrescribirLote]="sobrescribirLote"
+        [tienePreview]="tienePreview"
+        [detalle]="detalle"
+        (featurePreviewChange)="featurePreview = $event; gherkinOrigenArchivo = ''"
+        (forzarIncompletoChange)="forzarIncompleto = $event"
+        (sobrescribirLoteChange)="sobrescribirLote = $event"
+        (guardar)="guardar()"
+        (verModulos)="tab.set('modulos'); refreshLista()"
+        (importarLote)="importarLote()"
+      />
+    </div>
+  }
+
+  @if (tab() === 'modulos') {
+    <app-modulos-lista
+      [modulos]="modulos()"
+      [abiertos]="abiertos()"
+      [menuModuloId]="menuModuloId()"
+      [renameId]="renameId()"
+      [renameValue]="renameValue"
+      [gherkinOpen]="gherkinOpen()"
+      [deshacerHint]="deshacerHint()"
+      [puedeDeshacer]="puedeDeshacer()"
+      (refresh)="refreshLista()"
+      (deshacer)="deshacer()"
+      (toggleGrupo)="toggleGrupo($event)"
+      (toggleMenu)="toggleMenuModulo($event.id, $event.ev)"
+      (agregarPrueba)="agregarPrueba($event)"
+      (abrirRename)="abrirRename($event.m, $event.ev)"
+      (eliminarModulo)="eliminarModulo($event.m, $event.ev)"
+      (renameValueChange)="renameValue = $event"
+      (confirmRename)="confirmRename($event.m, $event.ev)"
+      (cancelRename)="cancelRename($event)"
+      (toggleGherkin)="toggleGherkin($event)"
+      (editarPrueba)="editarPrueba($event); tab.set('crear')"
+      (eliminarPrueba)="eliminarPrueba($event)"
+    />
+  }
+</div>
+
+<app-confirm-dialog
+  [open]="dialogOpen()"
+  [title]="dialogTitle()"
+  [body]="dialogBody()"
+  [confirmLabel]="dialogConfirmLabel()"
+  [danger]="dialogDanger()"
+  mode="confirm"
+  (closed)="closeDialog($event)"
+/>
+
+<app-confirm-dialog
+  [open]="eliminarProyectoDialog()"
+  title="Eliminar proyecto"
+  [body]="'¿Eliminar el proyecto «' + proyectoNombre + '»? No borra los .feature del disco.'"
+  confirmLabel="Eliminar"
+  cancelLabel="Cancelar"
+  [danger]="true"
+  (closed)="confirmarEliminarProyecto($event)"
+/>

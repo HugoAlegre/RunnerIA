@@ -1,0 +1,1095 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manual a prueba de tontos — Frontend para casos de prueba</title>
+  <style>
+    :root {
+      --ink: #1a1a1a;
+      --muted: #555;
+      --paper: #faf9f6;
+      --card: #ffffff;
+      --line: #ddd8ce;
+      --accent: #0b5fff;
+      --ok: #0a7a3e;
+      --warn: #9a6700;
+      --bad: #b42318;
+      --code-bg: #f3f1eb;
+      --sidebar: #111827;
+      --sidebar-text: #e5e7eb;
+      --sidebar-muted: #9ca3af;
+      --highlight: #fff3bf;
+      --step: #e8f0ff;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      background: var(--sidebar);
+      color: var(--sidebar-text);
+      padding: 24px 18px;
+    }
+
+    nav h1 {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+      color: #fff;
+    }
+
+    nav .sub {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 12px;
+      color: var(--sidebar-muted);
+      margin-bottom: 22px;
+      line-height: 1.4;
+    }
+
+    nav a {
+      display: block;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 13px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      margin-bottom: 2px;
+    }
+
+    nav a:hover { background: #1f2937; }
+    nav a.sec {
+      color: var(--sidebar-muted);
+      font-size: 12px;
+      padding-left: 18px;
+    }
+
+    main {
+      max-width: 880px;
+      padding: 40px 48px 80px;
+    }
+
+    main > header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 24px;
+      margin-bottom: 36px;
+    }
+
+    main > header h1 {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.15;
+      margin: 0 0 12px;
+      letter-spacing: -0.02em;
+    }
+
+    main > header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    h2 {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 26px;
+      margin: 48px 0 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      scroll-margin-top: 16px;
+    }
+
+    h3 {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 18px;
+      margin: 28px 0 10px;
+      scroll-margin-top: 16px;
+    }
+
+    h4 {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 15px;
+      margin: 18px 0 8px;
+      color: #333;
+    }
+
+    p, li { font-size: 16px; }
+    ul, ol { padding-left: 1.3em; }
+    li { margin-bottom: 6px; }
+
+    .callout {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--accent);
+      padding: 14px 16px;
+      margin: 18px 0;
+      border-radius: 0 10px 10px 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    .callout.ok { border-left-color: var(--ok); }
+    .callout.warn { border-left-color: var(--warn); background: #fffbeb; }
+    .callout.bad { border-left-color: var(--bad); background: #fef2f2; }
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .step {
+      background: var(--step);
+      border: 1px solid #c9dbff;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin: 16px 0;
+    }
+
+    .step .n {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-weight: 800;
+      color: var(--accent);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist li {
+      position: relative;
+      padding: 8px 10px 8px 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: var(--card);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    .checklist li::before {
+      content: "☐";
+      position: absolute;
+      left: 12px;
+      top: 8px;
+      font-size: 16px;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 12px 0 18px;
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.92em;
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    pre code { background: none; padding: 0; }
+
+    mark {
+      background: var(--highlight);
+      padding: 0 3px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+      background: var(--card);
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { background: #f0eee7; }
+
+    .analogy {
+      font-style: italic;
+      color: var(--muted);
+      border-left: 3px solid var(--line);
+      padding-left: 14px;
+      margin: 14px 0;
+    }
+
+    .mini-demo {
+      border: 2px dashed #94a3b8;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+      background: #fff;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    .mini-demo .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .fake-btn {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background: #0ea5e9;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      margin-right: 8px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    .fake-btn.ghost {
+      background: #fff;
+      color: #111;
+    }
+
+    .fake-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 8px;
+      background: #f8fafc;
+    }
+
+    .fake-card.selected {
+      background: #111827;
+      color: #fff;
+    }
+
+    .toc-box {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin: 20px 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    .toc-box ol { margin: 8px 0 0; }
+
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav {
+        position: relative;
+        height: auto;
+        max-height: none;
+      }
+      main { padding: 24px 18px 60px; }
+    }
+
+    @media print {
+      nav { display: none; }
+      .layout { grid-template-columns: 1fr; }
+      main { max-width: none; padding: 0; }
+      h2 { break-before: page; }
+      h2:first-of-type { break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav aria-label="Índice del manual">
+      <h1>Manual Frontend</h1>
+      <div class="sub">Casos de prueba SOT · Curso paso a paso · Nivel principiante</div>
+      <a href="#para-quien">Para quién es</a>
+      <a href="#mapa">Mapa del viaje</a>
+      <a href="#clase-0">Clase 0 — Ideas base</a>
+      <a href="#clase-1">Clase 1 — Qué vamos a construir</a>
+      <a href="#clase-2">Clase 2 — Carpetas y archivo</a>
+      <a href="#clase-3">Clase 3 — HTML esqueleto</a>
+      <a href="#clase-4">Clase 4 — CSS (apariencia)</a>
+      <a href="#clase-5">Clase 5 — Lista de escenarios</a>
+      <a href="#clase-6">Clase 6 — Panel de detalle</a>
+      <a href="#clase-7">Clase 7 — JavaScript básico</a>
+      <a href="#clase-8">Clase 8 — Datos de casos</a>
+      <a href="#clase-9">Clase 9 — Botones útiles</a>
+      <a href="#clase-10">Clase 10 — Conectar con la automatización</a>
+      <a href="#clase-11">Clase 11 — Errores típicos</a>
+      <a href="#examen">Examen final (checklist)</a>
+      <a href="#glosario">Glosario</a>
+      <a class="sec" href="#anexo-a">Anexo A — Plantilla mínima</a>
+      <a class="sec" href="#anexo-b">Anexo B — Relación con AutomatizacionSOT</a>
+    </nav>
+
+    <main>
+      <header>
+        <h1>Manual a prueba de tontos:<br />Frontend para casos de prueba</h1>
+        <p>
+          Como si fuera una clase de páginas web. Vas a aprender a armar una pantalla
+          donde un operador elige un escenario, ve prerequisitos y lanza la prueba.
+          No es la app final: es el <strong>manual</strong> para que vos la puedas construir.
+        </p>
+      </header>
+
+      <section id="para-quien">
+        <h2>Para quién es este manual</h2>
+        <p>
+          Para alguien que <mark>nunca programó una página</mark> (o casi) y quiere entender,
+          sin magia, cómo se hace un frontend sencillo para listar y ejecutar casos de prueba
+          de Automatizacion SOT.
+        </p>
+        <div class="callout">
+          <strong>Regla de oro del profesor</strong>
+          Si no entendés una palabra, andá al <a href="#glosario">glosario</a>.
+          Si un paso falla, no saltees: leé la Clase 11 (errores típicos).
+        </div>
+        <div class="callout warn">
+          <strong>Qué NO es este archivo</strong>
+          No es el runner listo para producción. No ejecuta Playwright solo. Es un
+          <em>curso en HTML</em>: abrís este archivo en el navegador y aprendés.
+          El prototipo visual de ejemplo del proyecto se llama
+          <code>prototipo-simple-operador.html</code>.
+        </div>
+      </section>
+
+      <section id="mapa">
+        <h2>Mapa del viaje (qué vas a lograr)</h2>
+        <div class="toc-box">
+          <strong>Al terminar, vas a saber hacer:</strong>
+          <ol>
+            <li>Un archivo <code>.html</code> que se abre en Chrome.</li>
+            <li>Una lista de escenarios a la izquierda.</li>
+            <li>Un panel a la derecha con título, tag, prerequisitos y botones.</li>
+            <li>Que al hacer clic en un escenario, el panel se actualice (JavaScript).</li>
+            <li>Entender cómo, más adelante, ese botón “Ejecutar” podría llamar a un script PowerShell o a una API.</li>
+          </ol>
+        </div>
+        <p class="analogy">
+          Analogía: el frontend es el <em>tablero de un ascensor</em>. Los botones no son el motor:
+          solo piden “piso 3”. La automatización (Playwright + SpecFlow) es el motor que mueve la cabina.
+        </p>
+      </section>
+
+      <!-- CLASE 0 -->
+      <section id="clase-0">
+        <h2>Clase 0 — Tres piezas de toda página web</h2>
+        <p>Toda pantalla del navegador se arma con tres lenguajes. Memorizá esto:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Lenguaje</th>
+              <th>Para qué sirve</th>
+              <th>Analogía</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>HTML</strong></td>
+              <td>Define <em>qué hay</em>: títulos, botones, listas, textos.</td>
+              <td>Los ladrillos y paredes de la casa</td>
+            </tr>
+            <tr>
+              <td><strong>CSS</strong></td>
+              <td>Define <em>cómo se ve</em>: colores, tamaños, columnas.</td>
+              <td>La pintura y el amoblamiento</td>
+            </tr>
+            <tr>
+              <td><strong>JavaScript</strong></td>
+              <td>Define <em>qué pasa al hacer clic</em>: cambiar textos, mostrar datos.</td>
+              <td>Los interruptores y el electricista</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout ok">
+          <strong>Ejercicio mental</strong>
+          Si ves un botón azul “Ejecutar escenario”: el botón es HTML, el azul es CSS,
+          y que al hacer clic cambie el texto “Corrida en curso…” es JavaScript.
+        </div>
+      </section>
+
+      <!-- CLASE 1 -->
+      <section id="clase-1">
+        <h2>Clase 1 — Qué vamos a construir (el diseño en papel)</h2>
+        <p>
+          Antes de escribir código, dibujá en un papel (o en la cabeza) dos zonas:
+        </p>
+        <ol>
+          <li><strong>Izquierda:</strong> lista de escenarios (01, 02, 03…).</li>
+          <li><strong>Derecha:</strong> detalle del escenario elegido (qué hace, prerequisitos, botones).</li>
+        </ol>
+
+        <div class="mini-demo">
+          <div class="label">Boceto mental (así debe verse la idea)</div>
+          <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;">
+            <div>
+              <div class="fake-card selected">
+                <small>Escenario 03</small><br /><strong>Interpase aceptado</strong>
+              </div>
+              <div class="fake-card">Escenario 04 — Anulado</div>
+              <div class="fake-card">Escenario 05 — Limpieza</div>
+            </div>
+            <div class="fake-card">
+              <strong>Interpase aceptado</strong><br />
+              <span style="color:#64748b;font-size:13px;">Tag @OtrosIngresos · Sucursal 131</span>
+              <div style="margin-top:10px;font-size:13px;">
+                ☐ Dos cajas normales<br />
+                ☐ COE + saldo<br />
+                ☐ Fecha bandeja = proceso
+              </div>
+              <button type="button" class="fake-btn ghost" onclick="alert('Esto es solo demo del manual')">Validar</button>
+              <button type="button" class="fake-btn" onclick="alert('En la app real, acá arrancaría el test')">Ejecutar</button>
+            </div>
+          </div>
+        </div>
+
+        <h3>Preguntas de negocio que el frontend debe responder</h3>
+        <table>
+          <thead>
+            <tr><th>Pregunta del operador</th><th>Qué mostrar en pantalla</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>¿Qué puedo correr?</td><td>Lista de escenarios con nombre corto</td></tr>
+            <tr><td>¿Qué hace este?</td><td>Descripción en lenguaje humano</td></tr>
+            <tr><td>¿Está listo el ambiente?</td><td>Checklist de prerequisitos</td></tr>
+            <tr><td>¿Cómo sé que pasó?</td><td>Qué evidencia revisar (capturas / informe)</td></tr>
+            <tr><td>¿Cómo lo lanzo?</td><td>Botón Ejecutar (y más adelante: estado OK/FAIL)</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- CLASE 2 -->
+      <section id="clase-2">
+        <h2>Clase 2 — Carpetas, archivo y cómo abrirlo</h2>
+
+        <div class="step">
+          <div class="n">Paso 2.1</div>
+          <p style="margin:6px 0 0;">
+            Abrí el Explorador de Windows y andá a la carpeta del proyecto, por ejemplo:<br />
+            <code>C:\Repositorio\Proyecto\AutomatizacionSOT\AutomatizacionSOT\</code>
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="n">Paso 2.2</div>
+          <p style="margin:6px 0 0;">
+            Creá un archivo nuevo de texto. Renombralo a
+            <code>mi-runner-operador.html</code>
+            (importante: la extensión debe ser <code>.html</code>, no <code>.txt</code>).
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="n">Paso 2.3</div>
+          <p style="margin:6px 0 0;">
+            Abrilo con el Bloc de notas, VS Code o Cursor. Escribí el código de las clases siguientes.
+            Guardá. Luego hacé doble clic en el archivo: se abre en el navegador.
+          </p>
+        </div>
+
+        <div class="callout warn">
+          <strong>Trampa clásica de Windows</strong>
+          Si no ves la extensión <code>.txt</code>, Windows la oculta. Activá
+          “Extensiones de nombre de archivo” en el Explorador. Si no, podés crear
+          <code>mi-runner-operador.html.txt</code> sin querer y el navegador no lo trata como página.
+        </div>
+      </section>
+
+      <!-- CLASE 3 -->
+      <section id="clase-3">
+        <h2>Clase 3 — HTML: el esqueleto mínimo</h2>
+        <p>
+          Copiá esto tal cual como base. Es la “casa vacía”. Todo lo demás se agrega adentro de
+          <code>&lt;body&gt;</code>.
+        </p>
+<pre><code>&lt;!doctype html&gt;
+&lt;html lang="es"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8" /&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1" /&gt;
+  &lt;title&gt;Runner de pruebas SOT&lt;/title&gt;
+  &lt;style&gt;
+    /* Acá va el CSS (Clase 4) */
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;main class="app"&gt;
+    &lt;header&gt;
+      &lt;h1&gt;Runner de pruebas SOT&lt;/h1&gt;
+      &lt;p&gt;Elegí un caso, revisá prerequisitos y ejecutá.&lt;/p&gt;
+    &lt;/header&gt;
+
+    &lt;section class="layout"&gt;
+      &lt;aside id="lista" class="panel"&gt;&lt;!-- lista de escenarios --&gt;&lt;/aside&gt;
+      &lt;section id="detalle" class="panel"&gt;&lt;!-- detalle del elegido --&gt;&lt;/section&gt;
+    &lt;/section&gt;
+  &lt;/main&gt;
+
+  &lt;script&gt;
+    // Acá va el JavaScript (Clase 7)
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+        <h3>Qué significa cada etiqueta (sin misterio)</h3>
+        <table>
+          <thead>
+            <tr><th>Etiqueta</th><th>Traducción humana</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>&lt;!doctype html&gt;</code></td><td>Le dice al navegador: “esto es HTML moderno”.</td></tr>
+            <tr><td><code>&lt;html lang="es"&gt;</code></td><td>Documento en español.</td></tr>
+            <tr><td><code>&lt;head&gt;</code></td><td>Datos internos (título de pestaña, CSS). No se ve como contenido.</td></tr>
+            <tr><td><code>&lt;title&gt;</code></td><td>Texto de la pestaña del navegador.</td></tr>
+            <tr><td><code>&lt;body&gt;</code></td><td>Todo lo que el usuario ve.</td></tr>
+            <tr><td><code>&lt;main&gt;</code></td><td>Contenedor principal de la página.</td></tr>
+            <tr><td><code>&lt;header&gt;</code></td><td>Cabecera (título y subtítulo).</td></tr>
+            <tr><td><code>&lt;aside&gt;</code></td><td>Columna lateral (la lista).</td></tr>
+            <tr><td><code>&lt;section&gt;</code></td><td>Bloque temático (el detalle).</td></tr>
+            <tr><td><code>id="lista"</code></td><td>Nombre único para que JavaScript lo encuentre.</td></tr>
+            <tr><td><code>class="panel"</code></td><td>Etiqueta de estilo para el CSS.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <strong>Práctica</strong>
+          Guardá, abrí en Chrome. Deberías ver solo el título y el subtítulo.
+          Si ves eso: felicitaciones, ya tenés un frontend (feo, pero frontend).
+        </div>
+      </section>
+
+      <!-- CLASE 4 -->
+      <section id="clase-4">
+        <h2>Clase 4 — CSS: que no se vea como documento Word de 1998</h2>
+        <p>
+          Dentro de <code>&lt;style&gt;...&lt;/style&gt;</code> pegá reglas. Empezá por lo esencial:
+          fondo, dos columnas, cajas blancas.
+        </p>
+<pre><code>:root {
+  --bg: #eef2f7;
+  --panel: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --line: #d8dee9;
+  --accent: #0ea5e9;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.app {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 16px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 18px;
+}
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+}</code></pre>
+
+        <h3>Explicación corta de lo importante</h3>
+        <ul>
+          <li><code>:root { --accent: ... }</code> → variables de color. Cambiás un valor y se actualiza en varios lados.</li>
+          <li><code>display: grid</code> + <code>grid-template-columns: 360px 1fr</code> → dos columnas: izquierda fija, derecha flexible.</li>
+          <li><code>@media (max-width: 900px)</code> → en pantallas chicas, una sola columna (apilado).</li>
+        </ul>
+        <div class="callout ok">
+          <strong>Truco del profesor</strong>
+          No inventes 40 colores. Elegí fondo gris claro, panel blanco, texto casi negro,
+          un solo color de acento para el botón principal.
+        </div>
+      </section>
+
+      <!-- CLASE 5 -->
+      <section id="clase-5">
+        <h2>Clase 5 — Lista de escenarios (HTML estático primero)</h2>
+        <p>
+          Primero hacelo <strong>a mano</strong>, sin JavaScript. Así entendés la estructura.
+          Después lo automatizamos.
+        </p>
+<pre><code>&lt;aside id="lista" class="panel scenario-list"&gt;
+  &lt;div class="scenario selected" data-id="03"&gt;
+    &lt;small&gt;Escenario 03&lt;/small&gt;
+    &lt;strong&gt;Interpase aceptado&lt;/strong&gt;
+    &lt;span&gt;Enviar y aceptar pase desde caja destino.&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;div class="scenario" data-id="04"&gt;
+    &lt;small&gt;Escenario 04&lt;/small&gt;
+    &lt;strong&gt;Interpase anulado&lt;/strong&gt;
+    &lt;span&gt;Anular pase pendiente desde caja origen.&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;div class="scenario" data-id="05"&gt;
+    &lt;small&gt;Escenario 05&lt;/small&gt;
+    &lt;strong&gt;Limpieza interpases&lt;/strong&gt;
+    &lt;span&gt;Resolver pases A confirmar.&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/aside&gt;</code></pre>
+
+        <div class="callout">
+          <strong>Por qué <code>data-id="03"</code></strong>
+          Es un “carnet de identidad” del escenario. JavaScript lo lee para saber
+          qué detalle mostrar. No es magia: es un atributo HTML inventado por nosotros.
+        </div>
+
+        <h3>CSS de cada ítem de la lista</h3>
+<pre><code>.scenario-list { display: grid; gap: 10px; }
+.scenario {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  background: #fbfcfe;
+  cursor: pointer;
+}
+.scenario.selected {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+.scenario strong { display: block; margin-top: 6px; }
+.scenario span {
+  display: block;
+  margin-top: 5px;
+  opacity: 0.72;
+  font-size: 13px;
+}</code></pre>
+      </section>
+
+      <!-- CLASE 6 -->
+      <section id="clase-6">
+        <h2>Clase 6 — Panel de detalle (lo que el operador lee)</h2>
+        <p>La derecha tiene cuatro bloques fijos. No mezcles todo en un solo párrafo.</p>
+        <ol>
+          <li>Título + descripción + tag SpecFlow</li>
+          <li>Datos de contexto (sucursal, usuario, resultado esperado)</li>
+          <li>Checklist “Antes de ejecutar”</li>
+          <li>Checklist “Evidencia a revisar” + botones</li>
+        </ol>
+<pre><code>&lt;section id="detalle" class="panel detail"&gt;
+  &lt;div class="detail-head"&gt;
+    &lt;div&gt;
+      &lt;h2 id="titulo"&gt;Interpase aceptado&lt;/h2&gt;
+      &lt;p id="descripcion"&gt;Circuito completo de pase intercaja...&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;span id="tag" class="tag"&gt;@OtrosIngresos&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class="info-grid"&gt;
+    &lt;div class="info"&gt;&lt;small&gt;Sucursal&lt;/small&gt;&lt;strong id="sucursal"&gt;131&lt;/strong&gt;&lt;/div&gt;
+    &lt;div class="info"&gt;&lt;small&gt;Usuario&lt;/small&gt;&lt;strong id="usuario"&gt;operador&lt;/strong&gt;&lt;/div&gt;
+    &lt;div class="info"&gt;&lt;small&gt;Resultado&lt;/small&gt;&lt;strong id="resultado"&gt;Aceptado&lt;/strong&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;h3&gt;Antes de ejecutar&lt;/h3&gt;
+  &lt;div id="prerequisitos" class="checks"&gt;&lt;/div&gt;
+
+  &lt;h3&gt;Evidencia a revisar&lt;/h3&gt;
+  &lt;div id="evidencias" class="checks"&gt;&lt;/div&gt;
+
+  &lt;div class="actions"&gt;
+    &lt;button type="button" id="btnValidar"&gt;Validar prerequisitos&lt;/button&gt;
+    &lt;button type="button" id="btnPasos"&gt;Ver pasos&lt;/button&gt;
+    &lt;button type="button" id="btnEjecutar" class="primary"&gt;Ejecutar escenario&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/section&gt;</code></pre>
+        <div class="callout warn">
+          <strong>Diseño para operadores (no para programadores)</strong>
+          Evitá jerga: no pongas “feature file” ni rutas de disco en el título.
+          Poné nombres de negocio: “Interpase aceptado”, “Alta con apertura”.
+        </div>
+      </section>
+
+      <!-- CLASE 7 -->
+      <section id="clase-7">
+        <h2>Clase 7 — JavaScript: hacer que el clic cambie el panel</h2>
+        <p>
+          Idea: cuando hacen clic en un <code>.scenario</code>, leemos su <code>data-id</code>,
+          buscamos los datos en un objeto, y rellenamos los <code>id</code> del panel.
+        </p>
+
+        <div class="step">
+          <div class="n">Paso 7.1 — Función para pintar el detalle</div>
+<pre><code>function mostrarEscenario(esc) {
+  document.getElementById("titulo").textContent = esc.titulo;
+  document.getElementById("descripcion").textContent = esc.descripcion;
+  document.getElementById("tag").textContent = esc.tag;
+  document.getElementById("sucursal").textContent = esc.sucursal;
+  document.getElementById("usuario").textContent = esc.usuario;
+  document.getElementById("resultado").textContent = esc.resultado;
+
+  document.getElementById("prerequisitos").innerHTML =
+    esc.prerequisitos.map(t =&gt; `&lt;div class="check"&gt;☐ ${t}&lt;/div&gt;`).join("");
+
+  document.getElementById("evidencias").innerHTML =
+    esc.evidencias.map(t =&gt; `&lt;div class="check"&gt;☐ ${t}&lt;/div&gt;`).join("");
+}</code></pre>
+        </div>
+
+        <div class="step">
+          <div class="n">Paso 7.2 — Escuchar clics en la lista</div>
+<pre><code>document.querySelectorAll(".scenario").forEach(item =&gt; {
+  item.addEventListener("click", () =&gt; {
+    document.querySelectorAll(".scenario").forEach(x =&gt; x.classList.remove("selected"));
+    item.classList.add("selected");
+
+    const id = item.getAttribute("data-id");
+    mostrarEscenario(ESCENARIOS[id]);
+  });
+});</code></pre>
+        </div>
+
+        <div class="callout">
+          <strong>Traducción línea por línea</strong>
+          <code>querySelectorAll</code> = “traeme todos los que coinciden”.<br />
+          <code>addEventListener("click", ...)</code> = “cuando hagan clic, ejecutá esto”.<br />
+          <code>classList.add("selected")</code> = “pintalo como elegido”.<br />
+          <code>ESCENARIOS[id]</code> = “buscá en mi diccionario el escenario 03/04/05”.
+        </div>
+      </section>
+
+      <!-- CLASE 8 -->
+      <section id="clase-8">
+        <h2>Clase 8 — Los datos de los casos (tu “mini base de datos”)</h2>
+        <p>
+          En un frontend simple, los casos viven en un objeto JavaScript.
+          Más adelante podrían venir de un JSON o de una API. Empezá así:
+        </p>
+<pre><code>const ESCENARIOS = {
+  "03": {
+    titulo: "Interpase aceptado",
+    descripcion: "Enviar pase, billetaje, aceptar en caja destino.",
+    tag: "@OtrosIngresos",
+    sucursal: "131 - San Martin",
+    usuario: "hugo.alegre",
+    resultado: "Aceptado",
+    script: "run-Intercaja.ps1",
+    prerequisitos: [
+      "Al menos dos cajas normales asignadas al usuario",
+      "Caja origen con COE y saldo suficiente",
+      "Fecha de bandeja = fecha de proceso"
+    ],
+    evidencias: [
+      "Pase en Enviados: A confirmar",
+      "Detalle con monto y número SOT",
+      "Pase en Recibidos: Aceptado"
+    ]
+  },
+  "04": {
+    titulo: "Interpase anulado",
+    descripcion: "Enviar pase y anularlo desde caja origen.",
+    tag: "@AnulacionPaseIntercaja",
+    sucursal: "131 - San Martin",
+    usuario: "hugo.alegre",
+    resultado: "Anulado",
+    script: "run-AnulacionPaseIntercaja.ps1",
+    prerequisitos: [
+      "Caja origen operativa",
+      "No dejar pases basura previos (o correr limpieza)"
+    ],
+    evidencias: [
+      "Pase aparece A confirmar",
+      "Tras anular, estado Anulado / no pendiente"
+    ]
+  }
+};
+
+// Al cargar la página, mostrar el primero
+mostrarEscenario(ESCENARIOS["03"]);</code></pre>
+
+        <div class="callout ok">
+          <strong>Buen hábito</strong>
+          Un campo <code>script</code> por escenario te recuerda qué PowerShell del proyecto
+          corresponde (<code>run-Intercaja.ps1</code>, etc.). El botón Ejecutar puede mostrar ese nombre.
+        </div>
+      </section>
+
+      <!-- CLASE 9 -->
+      <section id="clase-9">
+        <h2>Clase 9 — Botones útiles (sin mentirle al operador)</h2>
+        <p>
+          En el prototipo estático los botones no hacen nada real. En tu versión, al menos
+          informá qué pasaría. Eso ya es un frontend honesto.
+        </p>
+<pre><code>let escenarioActual = "03";
+
+document.getElementById("btnEjecutar").addEventListener("click", () =&gt; {
+  const esc = ESCENARIOS[escenarioActual];
+  alert(
+    "En una versión conectada se ejecutaría:\n" +
+    esc.script + "\n\nEscenario: " + esc.titulo
+  );
+});
+
+document.getElementById("btnValidar").addEventListener("click", () =&gt; {
+  alert("Checklist manual:\n- " + ESCENARIOS[escenarioActual].prerequisitos.join("\n- "));
+});
+
+document.getElementById("btnPasos").addEventListener("click", () =&gt; {
+  alert("Ver feature / MANUAL.md del escenario " + escenarioActual);
+});</code></pre>
+        <p>
+          Recordá actualizar <code>escenarioActual</code> dentro del clic de la lista:
+        </p>
+<pre><code>escenarioActual = id;</code></pre>
+      </section>
+
+      <!-- CLASE 10 -->
+      <section id="clase-10">
+        <h2>Clase 10 — Cómo se conecta esto con AutomatizacionSOT (visión real)</h2>
+        <p>
+          Acá está la parte que muchos saltan y después se frustran.
+          El HTML <strong>no puede</strong>, solo, ejecutar un <code>.ps1</code> en tu PC por seguridad del navegador.
+          Necesitás un “puente”.
+        </p>
+
+        <h3>Camino A — Solo documentación (lo que ya tenés)</h3>
+        <ul>
+          <li>Frontend muestra escenarios y prerequisitos.</li>
+          <li>El operador copia el comando o corre el script a mano.</li>
+          <li>Ventaja: cero riesgo, cero backend. Ideal para empezar.</li>
+        </ul>
+
+        <h3>Camino B — Mini servidor local (recomendado si querés “Ejecutar” de verdad)</h3>
+        <ol>
+          <li>Armás un programita (Node, .NET Minimal API, Python Flask) en <code>localhost</code>.</li>
+          <li>El botón Ejecutar hace <code>fetch("http://localhost:5050/run/03")</code>.</li>
+          <li>Ese servidor corre <code>dotnet test</code> o el <code>.ps1</code> correspondiente.</li>
+          <li>Devuelve JSON: <code>{ "ok": true, "log": "..." }</code>.</li>
+          <li>El frontend muestra OK/FAIL y link a evidencias.</li>
+        </ol>
+<pre><code>// Ejemplo conceptual del botón (Camino B)
+async function ejecutar() {
+  const res = await fetch("http://localhost:5050/run/" + escenarioActual, {
+    method: "POST"
+  });
+  const data = await res.json();
+  alert(data.ok ? "OK" : "FALLÓ: " + data.error);
+}</code></pre>
+
+        <h3>Camino C — Solo generar el comando</h3>
+        <p>
+          El botón copia al portapapeles algo como:
+        </p>
+<pre><code>powershell -File .\run-Intercaja.ps1</code></pre>
+        <p>El operador pega en una terminal. Simple y seguro.</p>
+
+        <table>
+          <thead>
+            <tr><th>Camino</th><th>Dificultad</th><th>Cuándo usarlo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>A — Solo UI informativa</td><td>Fácil</td><td>Primera versión / capacitación</td></tr>
+            <tr><td>C — Copiar comando</td><td>Fácil+</td><td>Operadores con acceso a terminal</td></tr>
+            <tr><td>B — API local</td><td>Media</td><td>Cuando ya confían en el flujo</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout warn">
+          <strong>Seguridad</strong>
+          Nunca pongas contraseñas de SOT dentro del HTML. Esas viven en
+          <code>appsettings.secrets.json</code> (como ya hace el proyecto).
+          El frontend solo muestra “usuario” enmascarado o el nombre, no el secret.
+        </div>
+      </section>
+
+      <!-- CLASE 11 -->
+      <section id="clase-11">
+        <h2>Clase 11 — Errores típicos (y cómo no volverte loco)</h2>
+        <table>
+          <thead>
+            <tr><th>Síntoma</th><th>Causa probable</th><th>Qué hacer</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Doble clic y se ve código crudo</td>
+              <td>Archivo guardado como <code>.txt</code></td>
+              <td>Renombrar a <code>.html</code></td>
+            </tr>
+            <tr>
+              <td>Página en blanco, F12 dice error</td>
+              <td>Typo en JavaScript (coma, comilla)</td>
+              <td>Abrir DevTools (F12) → pestaña Console</td>
+            </tr>
+            <tr>
+              <td><code>Cannot read properties of null</code></td>
+              <td>El <code>id</code> del HTML no coincide con el JS</td>
+              <td>Revisar que exista <code>id="titulo"</code> etc.</td>
+            </tr>
+            <tr>
+              <td>Clic no hace nada</td>
+              <td>Script arriba del HTML, o no hay <code>data-id</code></td>
+              <td>Poner el <code>&lt;script&gt;</code> al final del <code>body</code></td>
+            </tr>
+            <tr>
+              <td>Estilos no aplican</td>
+              <td>Class mal escrita (<code>scenaro</code>)</td>
+              <td>Copiar nombres exactos</td>
+            </tr>
+            <tr>
+              <td><code>fetch</code> falla por CORS</td>
+              <td>API local sin permitir el origen del HTML</td>
+              <td>Servir el HTML desde el mismo servidor, o configurar CORS</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout bad">
+          <strong>Método anti-pánico</strong>
+          1) ¿Se ve el HTML? 2) ¿Se ve el CSS? 3) ¿La Console muestra error?
+          No cambies tres cosas a la vez. Cambiá una, guardá, recargá (F5).
+        </div>
+      </section>
+
+      <!-- EXAMEN -->
+      <section id="examen">
+        <h2>Examen final — Checklist a prueba de tontos</h2>
+        <p>Marcá mentalmente. Si falta uno, volvé a esa clase.</p>
+        <ul class="checklist">
+          <li>Sé qué es HTML, CSS y JavaScript (Clase 0).</li>
+          <li>Tengo un archivo <code>.html</code> que abre en el navegador (Clase 2–3).</li>
+          <li>Hay dos columnas: lista + detalle (Clase 4–6).</li>
+          <li>Cada escenario tiene <code>data-id</code> y datos en un objeto <code>ESCENARIOS</code> (Clase 5 y 8).</li>
+          <li>Al hacer clic cambia el panel (Clase 7).</li>
+          <li>Los botones no mienten: informan script o llaman API (Clase 9–10).</li>
+          <li>No hay secretos en el HTML (Clase 10).</li>
+          <li>Sé abrir F12 y leer un error de Console (Clase 11).</li>
+        </ul>
+      </section>
+
+      <!-- GLOSARIO -->
+      <section id="glosario">
+        <h2>Glosario (diccionario del curso)</h2>
+        <table>
+          <thead>
+            <tr><th>Palabra</th><th>Significado simple</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Frontend</td><td>La parte visual que usa el humano en el navegador.</td></tr>
+            <tr><td>Backend</td><td>La parte que corre en el servidor o en tu máquina (scripts, API, tests).</td></tr>
+            <tr><td>Escenario / caso de prueba</td><td>Una historia de negocio que el robot debe cumplir (Given/When/Then).</td></tr>
+            <tr><td>Tag</td><td>Etiqueta SpecFlow como <code>@OtrosIngresos</code> para filtrar corridas.</td></tr>
+            <tr><td>Selector / id / class</td><td>Formas de “nombrar” elementos HTML para CSS o JS.</td></tr>
+            <tr><td>DOM</td><td>El árbol de elementos de la página que JavaScript puede modificar.</td></tr>
+            <tr><td>fetch</td><td>Función JS para pedir datos a una URL (API).</td></tr>
+            <tr><td>Playwright</td><td>Herramienta que controla el navegador como un robot.</td></tr>
+            <tr><td>Prerequisito</td><td>Condición que debe cumplirse antes de correr el caso.</td></tr>
+            <tr><td>Evidencia</td><td>Capturas / informe HTML que demuestran qué pasó.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ANEXO A -->
+      <section id="anexo-a">
+        <h2>Anexo A — Orden recomendado de construcción</h2>
+        <ol>
+          <li>Esqueleto HTML vacío con título.</li>
+          <li>CSS de dos columnas.</li>
+          <li>3 escenarios hardcodeados en la lista.</li>
+          <li>Panel de detalle hardcodeado (sin JS).</li>
+          <li>Objeto <code>ESCENARIOS</code>.</li>
+          <li>Clic que cambia el detalle.</li>
+          <li>Botones con <code>alert</code> honestos.</li>
+          <li>(Opcional) Copiar comando PowerShell.</li>
+          <li>(Opcional) API local que ejecuta el script.</li>
+        </ol>
+        <p>
+          Referencia visual ya existente en el repo:
+          <code>prototipo-simple-operador.html</code> (diseño estático, sin JS).
+          Este manual te enseña a <em>entender y extender</em> esa idea.
+        </p>
+      </section>
+
+      <!-- ANEXO B -->
+      <section id="anexo-b">
+        <h2>Anexo B — Mapa mental: UI ↔ proyecto AutomatizacionSOT</h2>
+        <table>
+          <thead>
+            <tr><th>En la pantalla</th><th>En el proyecto real</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Nombre del escenario</td><td>Título en <code>Features/*.feature</code></td></tr>
+            <tr><td>Tag @...</td><td>Tag SpecFlow / filtro NUnit</td></tr>
+            <tr><td>Botón Ejecutar</td><td><code>run-*.ps1</code> o <code>dotnet test --filter ...</code></td></tr>
+            <tr><td>Sucursal / usuario</td><td><code>appsettings.json</code> + overlays / perfiles</td></tr>
+            <tr><td>Prerequisitos</td><td>Lo que el MANUAL.md describe antes de correr</td></tr>
+            <tr><td>Evidencias</td><td>Carpeta de capturas + informe HTML de la corrida</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <strong>Tarea para la próxima clase (si querés practicar)</strong>
+          Tomá 2 escenarios del <code>MANUAL.md</code> (por ejemplo 01 y 02) y agregalos
+          al objeto <code>ESCENARIOS</code> con prerequisitos y evidencias en lenguaje de operador.
+          Si el panel se actualiza al hacer clic: aprobaste el curso.
+        </div>
+      </section>
+
+      <footer>
+        Manual didáctico · Frontend para casos de prueba · Automatizacion SOT<br />
+        Abrí este archivo en el navegador. Usá el menú izquierdo para saltar de clase en clase.<br />
+        Impresión: Ctrl+P (el menú lateral se oculta al imprimir).
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SOT Runner - Modo Operador</title>
+  <style>
+    :root {
+      --bg: #eef2f7;
+      --panel: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #d8dee9;
+      --selected: #111827;
+      --accent: #0ea5e9;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0;
+    }
+
+    header {
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      letter-spacing: -.06em;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+    }
+
+    .scenario-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .scenario {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
+    .scenario.selected {
+      background: var(--selected);
+      color: white;
+      border-color: var(--selected);
+    }
+
+    .scenario small {
+      color: inherit;
+      opacity: .7;
+      font-weight: 800;
+    }
+
+    .scenario strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 16px;
+    }
+
+    .scenario span {
+      display: block;
+      margin-top: 5px;
+      color: inherit;
+      opacity: .72;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .detail {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .detail h2 {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: -.05em;
+    }
+
+    .detail p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 620px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      padding: 8px 12px;
+      font-weight: 900;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .info {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
+    .info small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .info strong {
+      font-size: 18px;
+    }
+
+    .checks {
+      display: grid;
+      gap: 10px;
+    }
+
+    .check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      color: var(--muted);
+    }
+
+    .box {
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      border: 2px solid var(--accent);
+      flex: 0 0 auto;
+      margin-top: 1px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 14px;
+      padding: 13px 18px;
+      font-weight: 900;
+      cursor: default;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+      .detail-head { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Runner de pruebas SOT</h1>
+      <p>Diseño pensado para un operador: elegir caso, revisar prerequisitos y ejecutar.</p>
+    </header>
+
+    <section class="layout">
+      <aside class="panel scenario-list">
+        <div class="scenario selected">
+          <small>Escenario 03</small>
+          <strong>Interpase aceptado</strong>
+          <span>Enviar y aceptar pase desde caja destino.</span>
+        </div>
+        <div class="scenario">
+          <small>Escenario 04</small>
+          <strong>Interpase anulado</strong>
+          <span>Anular pase pendiente desde caja origen.</span>
+        </div>
+        <div class="scenario">
+          <small>Escenario 05</small>
+          <strong>Limpieza interpases</strong>
+          <span>Resolver pases A confirmar en Enviados o Recibidos.</span>
+        </div>
+        <div class="scenario">
+          <small>Escenario 01</small>
+          <strong>Alta sin COE</strong>
+          <span>Validar aviso de equivalencia pendiente.</span>
+        </div>
+        <div class="scenario">
+          <small>Escenario 02</small>
+          <strong>Alta con apertura</strong>
+          <span>Alta COE y apertura en pesos.</span>
+        </div>
+      </aside>
+
+      <section class="panel detail">
+        <div class="detail-head">
+          <div>
+            <h2>Interpase aceptado</h2>
+            <p>Ejecuta el circuito completo de pase intercaja: origen, destino, billetaje, confirmación, recepción y aceptación.</p>
+          </div>
+          <span class="tag">@OtrosIngresos</span>
+        </div>
+
+        <div class="info-grid">
+          <div class="info"><small>Sucursal</small><strong>131 - San Martin</strong></div>
+          <div class="info"><small>Usuario</small><strong>hugo.alegre</strong></div>
+          <div class="info"><small>Resultado esperado</small><strong>Aceptado</strong></div>
+        </div>
+
+        <div>
+          <h3>Antes de ejecutar</h3>
+          <div class="checks">
+            <div class="check"><span class="box"></span><span>Debe haber al menos dos cajas normales asignadas al usuario.</span></div>
+            <div class="check"><span class="box"></span><span>La caja origen debe tener equivalencia COE y saldo suficiente.</span></div>
+            <div class="check"><span class="box"></span><span>La fecha de bandeja debe coincidir con la fecha de proceso.</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h3>Evidencia a revisar</h3>
+          <div class="checks">
+            <div class="check"><span class="box"></span><span>Pase visible en Enviados con estado A confirmar.</span></div>
+            <div class="check"><span class="box"></span><span>Detalle con monto y número SOT correctos.</span></div>
+            <div class="check"><span class="box"></span><span>Pase final en Recibidos con estado Aceptado.</span></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button>Validar prerequisitos</button>
+          <button>Ver pasos</button>
+          <button class="primary">Ejecutar escenario</button>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

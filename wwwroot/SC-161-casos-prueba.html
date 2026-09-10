@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SC-161 — Casos de prueba</title>
+  <style>
+    :root {
+      --navy: #0f2744;
+      --ink: #1a1a1a;
+      --muted: #5b6573;
+      --paper: #f4f6f9;
+      --card: #fff;
+      --line: #d8dee8;
+      --accent: #1a6cff;
+      --feliz: #0a7a3e;
+      --neg: #b42318;
+      --alta: #9a6700;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, #0f2744, #1a4a7a);
+      color: #fff;
+      padding: 28px 32px 24px;
+    }
+    header a { color: #b8d4ff; }
+    header h1 { margin: 0 0 8px; font-size: 1.6rem; }
+    header .meta { opacity: .9; font-size: .95rem; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 24px 60px; }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      margin: 16px 0 20px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 14px; border-radius: 8px; border: 1px solid var(--line);
+      background: var(--card); color: var(--navy); text-decoration: none;
+      font-weight: 600; font-size: .9rem;
+    }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .stat {
+      background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+      padding: 12px 16px; min-width: 110px;
+    }
+    .stat b { display: block; font-size: 1.4rem; color: var(--navy); }
+    .stat span { color: var(--muted); font-size: .85rem; }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .chip {
+      border: 1px solid var(--line); background: #fff; border-radius: 999px;
+      padding: 6px 12px; cursor: pointer; font-size: .85rem;
+    }
+    .chip.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+    .case {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 16px 18px; margin-bottom: 12px;
+    }
+    .case-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .case-top strong { font-size: 1.05rem; color: var(--navy); margin-right: 6px; }
+    .badge {
+      font-size: .75rem; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+      text-transform: uppercase;
+    }
+    .badge.feliz { background: #e6f6ec; color: var(--feliz); }
+    .badge.negativo { background: #fdeceb; color: var(--neg); }
+    .badge.alta { background: #fff4d6; color: var(--alta); }
+    .badge.media { background: #eef2f7; color: var(--muted); }
+    .case h3 { margin: 0 0 8px; font-size: 1rem; }
+    .grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    .field label {
+      display: block; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em;
+      color: var(--muted); margin-bottom: 4px; font-weight: 700;
+    }
+    .field p, .field pre {
+      margin: 0; white-space: pre-wrap; font-size: .9rem;
+      background: #f8fafc; border: 1px solid var(--line); border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .field pre { font-family: Consolas, "Courier New", monospace; font-size: .82rem; overflow: auto; }
+    .error { color: var(--neg); padding: 20px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap" style="padding-top:0;padding-bottom:0;">
+      <div class="meta"><a href="/">← Volver al Runner</a> · Casos de prueba QA</div>
+      <h1 id="titulo">SC-161</h1>
+      <div class="meta" id="subtitulo">Cargando…</div>
+    </div>
+  </header>
+  <div class="wrap">
+    <div class="toolbar" id="toolbar"></div>
+    <div class="stats" id="stats"></div>
+    <div class="filters" id="filters">
+      <button type="button" class="chip active" data-f="todos">Todos</button>
+      <button type="button" class="chip" data-f="feliz">Felices</button>
+      <button type="button" class="chip" data-f="negativo">Negativos</button>
+    </div>
+    <div id="lista"></div>
+    <div id="err" class="error" style="display:none;"></div>
+  </div>
+  <script>
+    const base = "casos-prueba/SC-161";
+    let data = null;
+    let filtro = "todos";
+
+    function esc(s) {
+      return String(s || "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function render() {
+      if (!data) return;
+      document.getElementById("titulo").textContent = data.ticket + " — " + data.titulo;
+      document.getElementById("subtitulo").innerHTML =
+        'Jira: <a href="' + esc(data.jira) + '" target="_blank" rel="noopener">' + esc(data.jira) + "</a>";
+
+      document.getElementById("toolbar").innerHTML =
+        '<a class="btn primary" href="' + base + '/' + encodeURIComponent(data.excel) + '" download>Descargar Excel</a>' +
+        '<a class="btn" href="' + base + '/queries_qa_SC-161_verificacion_COBIS.sql" download>Queries BD (.sql)</a>' +
+        '<a class="btn" href="' + base + '/casos.json" target="_blank">JSON</a>' +
+        '<a class="btn" href="' + esc(data.jira) + '" target="_blank" rel="noopener">Abrir ticket Jira</a>';
+
+      document.getElementById("stats").innerHTML =
+        '<div class="stat"><b>' + data.total + '</b><span>Total</span></div>' +
+        '<div class="stat"><b>' + data.feliz + '</b><span>Felices</span></div>' +
+        '<div class="stat"><b>' + data.negativo + '</b><span>Negativos</span></div>';
+
+      const casos = (data.casos || []).filter(function (c) {
+        if (filtro === "todos") return true;
+        return (c.tipo || "").toLowerCase() === filtro;
+      });
+
+      document.getElementById("lista").innerHTML = casos.map(function (c) {
+        const tipo = (c.tipo || "").toLowerCase();
+        const prio = (c.prioridad || "").toLowerCase();
+        return '<article class="case" data-tipo="' + esc(tipo) + '">' +
+          '<div class="case-top">' +
+          '<strong>' + esc(c.id) + '</strong>' +
+          '<span class="badge ' + esc(tipo) + '">' + esc(c.tipo) + '</span>' +
+          '<span class="badge ' + esc(prio) + '">' + esc(c.prioridad) + '</span>' +
+          '<span class="badge media">' + esc(c.estado || "Pendiente") + '</span>' +
+          '</div>' +
+          '<h3>' + esc(c.caso) + '</h3>' +
+          '<div class="grid">' +
+          '<div class="field"><label>Criterio</label><p>' + esc(c.criterio) + '</p></div>' +
+          '<div class="field"><label>Datos de prueba</label><p>' + esc(c.datos) + '</p></div>' +
+          '<div class="field"><label>Pasos</label><p>' + esc(c.pasos) + '</p></div>' +
+          '<div class="field"><label>Resultado esperado</label><p>' + esc(c.resultado) + '</p></div>' +
+          '</div>' +
+          (c.bd ? '<div class="field" style="margin-top:12px;"><label>Verificación BD</label><pre>' + esc(c.bd) + '</pre></div>' : '') +
+          '</article>';
+      }).join("");
+    }
+
+    document.getElementById("filters").addEventListener("click", function (e) {
+      const btn = e.target.closest(".chip");
+      if (!btn) return;
+      filtro = btn.getAttribute("data-f");
+      document.querySelectorAll(".chip").forEach(function (c) {
+        c.classList.toggle("active", c === btn);
+      });
+      render();
+    });
+
+    fetch(base + "/casos.json", { cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("No se pudo cargar casos.json (" + r.status + ")");
+        return r.json();
+      })
+      .then(function (j) { data = j; render(); })
+      .catch(function (err) {
+        document.getElementById("err").style.display = "block";
+        document.getElementById("err").textContent = err.message;
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "name": "RunnerIA",
+      "path": "."
+    },
+    {
+      "name": "AutomatizacionSOT (tests)",
+      "path": "../AutomatizacionSOT/AutomatizacionSOT"
+    }
+  ],
+  "settings": {
+    "window.title": "RunnerIA"
+  }
+}

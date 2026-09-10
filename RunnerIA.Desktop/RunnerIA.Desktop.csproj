@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>RunnerIA</AssemblyName>
+    <Product>RunnerIA</Product>
+    <AssemblyTitle>RunnerIA</AssemblyTitle>
+    <AssemblyProduct>RunnerIA</AssemblyProduct>
+    <Version>0.0.10</Version>
+    <FileVersion>0.0.10.0</FileVersion>
+    <InformationalVersion>0.0.10</InformationalVersion>
+    <RootNamespace>RunnerIA.Desktop</RootNamespace>
+    <Description>RunnerIA — programa de escritorio (WebView2)</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3485.44" />
+  </ItemGroup>
+
+</Project>

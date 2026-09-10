@@ -1,0 +1,8 @@
+<Project>
+  <!-- bin/obj cortos fuera de OneDrive (MAX_PATH). Separado de AutomatizacionSOT. -->
+  <PropertyGroup>
+    <SotRunnerBuildRoot Condition="'$(SotRunnerBuildRoot)' == ''">$(LOCALAPPDATA)\RunnerIA\</SotRunnerBuildRoot>
+    <BaseOutputPath>$(SotRunnerBuildRoot)bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SotRunnerBuildRoot)obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+</Project>

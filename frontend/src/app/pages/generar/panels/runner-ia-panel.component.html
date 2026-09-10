@@ -1,0 +1,53 @@
+<details class="runneria-solapa" [open]="open">
+  <summary (click)="toggle($event)">
+    <span class="ria-sum-title">RunnerIA</span>
+    <span class="ria-sum-meta">{{ proyectoNombre || 'elegí el proyecto' }}</span>
+    <span class="ria-chevron" aria-hidden="true">{{ open ? '▾' : '▸' }}</span>
+  </summary>
+  <div class="ria-body">
+    <div class="cliente-field">
+      <label>Proyecto</label>
+      <select
+        [ngModel]="proyectoActivoId"
+        (ngModelChange)="onProyecto($event)"
+        [disabled]="guardando"
+      >
+        @for (p of proyectos; track p.id) {
+          <option [value]="p.id">{{ p.nombre }}</option>
+        }
+      </select>
+    </div>
+    <div class="actions mt-sm proyecto-ia-actions">
+      <button type="button" (click)="nuevoProyecto.emit()" [disabled]="guardando">Nuevo proyecto</button>
+      <button type="button" (click)="modificarProyecto.emit()" [disabled]="guardando || !proyectoActivoId">Modificar</button>
+      <button type="button" (click)="eliminarProyecto.emit()" [disabled]="guardando || !proyectoActivoId || proyectos.length <= 1">
+        Eliminar
+      </button>
+    </div>
+    <details class="ria-checklist">
+      <summary>Avanzado RunnerIA</summary>
+      @if (descripcionProyecto) {
+        <p class="hint">{{ descripcionProyecto }}</p>
+      }
+      <p class="hint ria-alcance">
+        {{ iaAlcanceTexto || 'Solo Analizar/Generar del proyecto elegido. No es un chat genérico.' }}
+      </p>
+      <ol>
+        @for (c of checklist; track c.id) {
+          <li>{{ c.texto }}</li>
+        }
+      </ol>
+      <div class="actions mt-sm">
+        <button type="button" (click)="reentrenar.emit()" [disabled]="guardando">
+          Reentrenar mapa
+        </button>
+      </div>
+      @if (mapaHint) {
+        <p class="hint mt-sm">{{ mapaHint }}</p>
+      }
+      @if (status) {
+        <div class="hint" [class.set]="statusTipo === 'ok'">{{ status }}</div>
+      }
+    </details>
+  </div>
+</details>

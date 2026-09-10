@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tutorial — Subir AutomatizacionSOT / Runner a un repositorio</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #fff;
+      --text: #1a2332;
+      --muted: #5c6b7a;
+      --line: #d8dee6;
+      --accent: #0b6bcb;
+      --navy: #0c2340;
+      --ok: #1a7f4b;
+      --warn: #9a6700;
+      --danger: #b42318;
+      --code-bg: #0f172a;
+      --code-fg: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      font-size: 16px;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 28px 20px 64px; }
+    header {
+      background: var(--navy);
+      color: #fff;
+      padding: 28px 20px;
+    }
+    header .inner { max-width: 880px; margin: 0 auto; }
+    header h1 { margin: 0 0 8px; font-size: 1.55rem; font-weight: 750; }
+    header p { margin: 0; opacity: 0.85; font-size: 0.95rem; }
+    nav.toc {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin: 20px 0 28px;
+    }
+    nav.toc h2 { margin: 0 0 10px; font-size: 0.95rem; color: var(--navy); }
+    nav.toc ol { margin: 0; padding-left: 1.3rem; }
+    nav.toc a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    nav.toc a:hover { text-decoration: underline; }
+    h2 {
+      margin: 36px 0 12px;
+      font-size: 1.25rem;
+      color: var(--navy);
+      border-bottom: 2px solid var(--line);
+      padding-bottom: 6px;
+    }
+    h3 { margin: 22px 0 8px; font-size: 1.05rem; color: var(--navy); }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); font-size: 0.92rem; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+    .ok { border-left: 4px solid var(--ok); }
+    .warn { border-left: 4px solid var(--warn); }
+    .danger { border-left: 4px solid var(--danger); }
+    .card strong { display: inline; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      font-size: 0.92rem;
+      margin: 12px 0 20px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th { background: #eef2f7; color: var(--navy); font-weight: 700; }
+    tr:last-child td { border-bottom: none; }
+    pre, code {
+      font-family: Consolas, "Cascadia Mono", monospace;
+    }
+    pre {
+      background: var(--code-bg);
+      color: var(--code-fg);
+      padding: 14px 16px;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      margin: 10px 0 16px;
+    }
+    code.inline {
+      background: #eef2f7;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+    .steps { padding-left: 1.25rem; }
+    .steps li { margin: 8px 0; }
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    @media print {
+      header { background: #fff; color: #000; border-bottom: 2px solid #000; }
+      pre { border: 1px solid #ccc; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="inner">
+      <div class="badge" style="border-color:rgba(255,255,255,.35);color:#fff;">Guía operativa</div>
+      <h1>Cómo subir el proyecto a cualquier repositorio</h1>
+      <p>
+        AutomatizacionSOT + Runner Operador · Qué versionar, qué no subir, y cómo publicar
+        en GitHub, Azure DevOps, TFS u otro remoto Git.
+      </p>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <nav class="toc" aria-label="Índice">
+      <h2>Índice</h2>
+      <ol>
+        <li><a href="#antes">Antes de empezar</a></li>
+        <li><a href="#que-subir">Qué subir y qué no</a></li>
+        <li><a href="#secrets">Secretos (<code class="inline">appsettings.secrets.json</code>)</a></li>
+        <li><a href="#remoto">Conectar el remoto que te den</a></li>
+        <li><a href="#primer-push">Primer push (subida inicial)</a></li>
+        <li><a href="#cambios">Subir cambios después</a></li>
+        <li><a href="#servidor">En el servidor online</a></li>
+        <li><a href="#checklist">Checklist final</a></li>
+      </ol>
+    </nav>
+
+    <section id="antes">
+      <h2>1. Antes de empezar</h2>
+      <p>Necesitás:</p>
+      <ul class="steps">
+        <li><strong>Git</strong> instalado (<code class="inline">git --version</code> en una terminal).</li>
+        <li>La URL del repositorio destino (HTTPS o SSH) que te den.</li>
+        <li>Credenciales: PAT / usuario+contraseña / clave SSH, según el proveedor.</li>
+        <li>Carpeta del proyecto, por ejemplo:
+          <code class="inline">C:\Repositorio\Proyecto\AutomatizacionSOT</code>
+        </li>
+      </ul>
+      <div class="card warn">
+        <strong>Importante:</strong> el archivo <code class="inline">Iniciar-Runner.bat</code> es para
+        <em>desarrollo local</em>. En un entorno online el servicio se arranca distinto;
+        igual el bat <strong>sí puede ir al repo</strong> para que el equipo lo use en sus PCs.
+      </div>
+    </section>
+
+    <section id="que-subir">
+      <h2>2. Qué subir y qué no</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Subir (sí)</th>
+            <th>No subir (nunca)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              Código del Runner (<code class="inline">RunnerOperador/</code>),
+              tests SpecFlow, scripts <code class="inline">run-*.ps1</code>,
+              <code class="inline">MANUAL.md</code>,
+              <code class="inline">Catalogo/repos-celula.json</code>,
+              <code class="inline">Catalogo/proyectos-runner.json</code>,
+              <code class="inline">appsettings.json</code> (sin contraseñas reales)
+            </td>
+            <td>
+              <code class="inline">appsettings.secrets.json</code>,
+              <code class="inline">.env</code>,
+              <code class="inline">Catalogo/cache/</code>,
+              <code class="inline">catalogo-sot.json</code> generado,
+              <code class="inline">audit-runner.log</code>,
+              <code class="inline">bin/</code> <code class="inline">obj/</code>,
+              reportes Extent, <code class="inline">node_modules/</code> (si aparece)
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted">
+        El archivo <code class="inline">.gitignore</code> del proyecto ya excluye la mayoría de lo sensible.
+        Revisalo antes del primer push.
+      </p>
+    </section>
+
+    <section id="secrets">
+      <h2>3. Secretos — no van al repo</h2>
+      <div class="card danger">
+        <strong>Regla de oro:</strong> nunca hagas
+        <code class="inline">git add appsettings.secrets.json</code>.
+        Ahí están PIN del Runner, SQL, COBIS, PAT TFS, etc.
+      </div>
+      <h3>En tu PC (desarrollo)</h3>
+      <ol class="steps">
+        <li>Versioná <code class="inline">AutomatizacionSOT/appsettings.secrets.json</code> solo como plantilla vacía.</li>
+        <li>Los valores reales quedan solo en disco local y no se agregan a logs, ZIP, informes ni commits.</li>
+      </ol>
+      <h3>Plantilla de ejemplo (sí se puede versionar)</h3>
+<pre>{
+  "RunnerAuth": { "Pin": "" },
+  "Aplicacion": { "Contrasena": "" },
+  "Supervision": { "Password": "" },
+  "SqlSot": { "Contrasena": "" },
+  "Cobis": { "Contrasena": "" },
+  "CatalogoTfs": { "Usuario": "", "Pat": "" },
+  "Allowlist": {
+    "JiraHosts": "atlassian.net",
+    "GitHosts": "tfs2018,dev.azure.com"
+  }
+}</pre>
+      <h3>En el servidor (cuando esté online)</h3>
+      <ol class="steps">
+        <li>Después del deploy, creá el secrets <strong>en el servidor</strong> (copiar/pegar o vault).</li>
+        <li>No lo bajes del servidor al repo ni lo compartas por chat/correo.</li>
+      </ol>
+    </section>
+
+    <section id="remoto">
+      <h2>4. Conectar el remoto que te den</h2>
+      <p>Abrí PowerShell o Git Bash en la raíz del proyecto:</p>
+<pre>cd C:\Repositorio\Proyecto\AutomatizacionSOT
+git status</pre>
+
+      <h3>Caso A — Ya es un repo Git local</h3>
+      <p>Solo agregás (o cambiás) el remoto:</p>
+<pre># Ver remotos actuales
+git remote -v
+
+# Si no hay origin, agregalo (reemplazá la URL por la que te den)
+git remote add origin https://ejemplo.com/org/AutomatizacionSOT.git
+
+# Si ya existe origin y te dan otra URL
+git remote set-url origin https://ejemplo.com/org/AutomatizacionSOT.git</pre>
+
+      <h3>Caso B — La carpeta aún no es Git</h3>
+<pre>cd C:\Repositorio\Proyecto\AutomatizacionSOT
+git init
+git branch -M main
+git remote add origin https://ejemplo.com/org/AutomatizacionSOT.git</pre>
+
+      <h3>URLs típicas según proveedor</h3>
+      <table>
+        <thead>
+          <tr><th>Proveedor</th><th>Ejemplo de URL</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Azure DevOps / TFS Git</td>
+            <td><code class="inline">http://tfs2018:8080/tfs/Coleccion/Proyecto/_git/NombreRepo</code></td>
+          </tr>
+          <tr>
+            <td>GitHub</td>
+            <td><code class="inline">https://github.com/org/AutomatizacionSOT.git</code></td>
+          </tr>
+          <tr>
+            <td>GitLab</td>
+            <td><code class="inline">https://gitlab.com/org/AutomatizacionSOT.git</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="card warn">
+        Autenticación: en TFS/Azure suele usarse un <strong>PAT</strong> (o Credential Manager).
+        En GitHub/GitLab: PAT o SSH. No guardes el PAT dentro del código.
+      </div>
+    </section>
+
+    <section id="primer-push">
+      <h2>5. Primer push (subida inicial)</h2>
+      <ol class="steps">
+        <li>Confirmá que no hay secrets staged:</li>
+      </ol>
+<pre>git status
+# Si aparece appsettings.secrets.json → NO lo agregues.
+# Si ya estaba trackeado por error:
+git rm --cached AutomatizacionSOT/appsettings.secrets.json</pre>
+      <ol class="steps" start="2">
+        <li>Agregá el proyecto y creá el commit:</li>
+      </ol>
+<pre>git add .
+git status
+git commit -m "feat(runner): publicar AutomatizacionSOT y Runner Operador"</pre>
+      <p class="muted">Si el equipo usa conventional commits en español, adaptá el mensaje.</p>
+      <ol class="steps" start="3">
+        <li>Subí al remoto:</li>
+      </ol>
+<pre># Primera vez (rama main o master según el remoto)
+git push -u origin HEAD
+
+# Si el remoto usa develop como rama principal:
+git checkout -b develop
+git push -u origin develop</pre>
+      <div class="card ok">
+        Si el push pide usuario/contraseña, usá el usuario del proveedor y el <strong>PAT</strong>
+        (no la contraseña de Windows, salvo que así lo indiquen).
+      </div>
+    </section>
+
+    <section id="cambios">
+      <h2>6. Subir cambios después (día a día)</h2>
+      <p>Cada vez que te pidan una mejora o corrección:</p>
+<pre>cd C:\Repositorio\Proyecto\AutomatizacionSOT
+git pull
+git status
+git add .
+git commit -m "fix(generar): descripción corta del cambio"
+git push</pre>
+      <div class="card">
+        <strong>Flujo recomendado:</strong> trabajá en una rama
+        (<code class="inline">feature/...</code> o <code class="inline">fix/...</code>),
+        hacé push y abrí Pull Request / Merge Request si el equipo lo exige.
+      </div>
+<pre>git checkout -b feature/mi-cambio
+# ... editás código ...
+git add .
+git commit -m "feat(runneria): ajuste solapa proyecto"
+git push -u origin feature/mi-cambio</pre>
+    </section>
+
+    <section id="servidor">
+      <h2>7. En el servidor online (después del deploy)</h2>
+      <ol class="steps">
+        <li>El pipeline o un admin hace <code class="inline">git pull</code> / publish del build.</li>
+        <li>Se crea <code class="inline">appsettings.secrets.json</code> <strong>solo en el servidor</strong>.</li>
+        <li>Se configura el servicio (IIS, Windows Service, Docker, etc.) — <strong>sin</strong> depender del bat para usuarios finales.</li>
+        <li>Se prueban: login PIN, Generar → Analizar, sync de catálogo (si aplica).</li>
+      </ol>
+      <table>
+        <thead>
+          <tr><th>Pieza</th><th>¿En el repo?</th><th>¿En el servidor?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Código + bat de desarrollo</td>
+            <td>Sí</td>
+            <td>Sí (código); el bat es opcional</td>
+          </tr>
+          <tr>
+            <td><code class="inline">appsettings.secrets.json</code></td>
+            <td><strong>No</strong></td>
+            <td><strong>Sí</strong> (creado a mano / vault)</td>
+          </tr>
+          <tr>
+            <td>Cache / índice catálogo</td>
+            <td>No</td>
+            <td>Se genera al sincronizar</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="checklist">
+      <h2>8. Checklist final</h2>
+      <div class="card ok">
+        <ul class="steps">
+          <li>`.gitignore` incluye secrets, cache, bin/obj, reportes.</li>
+          <li><code class="inline">git status</code> no muestra <code class="inline">appsettings.secrets.json</code>.</li>
+          <li>Remoto <code class="inline">origin</code> apunta a la URL que te dieron.</li>
+          <li>Primer commit + <code class="inline">git push</code> OK.</li>
+          <li>Documentaste al equipo: “secrets solo en servidor / máquina local”.</li>
+          <li>Si hay demo online: PIN y allowlist configurados fuera de Git.</li>
+        </ul>
+      </div>
+      <h3>Comandos de verificación rápida</h3>
+<pre>git remote -v
+git status
+git check-ignore -v AutomatizacionSOT/appsettings.secrets.json
+# Debe indicar que el archivo está ignorado.</pre>
+    </section>
+
+    <footer>
+      Proyecto AutomatizacionSOT / Runner Operador · Tutorial local.
+      Abrí este archivo en el navegador o desde
+      <code class="inline">RunnerOperador/wwwroot/TUTORIAL_SUBIR_REPO.html</code>
+      cuando el Runner esté en marcha.
+    </footer>
+  </div>
+</body>
+</html>

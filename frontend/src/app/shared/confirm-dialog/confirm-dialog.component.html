@@ -1,0 +1,30 @@
+@if (open) {
+  <div class="sot-dialog open" role="dialog" aria-modal="true" (click)="onBackdrop()">
+    <div
+      class="sot-dialog-card"
+      [class.danger]="danger"
+      [class.ok]="mode === 'alert' && ok"
+      [class.error]="mode === 'alert' && !ok"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="sot-dialog-head">
+        <div class="eyebrow">{{ resolvedEyebrow }}</div>
+        <h3>{{ title }}</h3>
+      </div>
+      <div class="sot-dialog-body"><p>{{ body }}</p></div>
+      <div class="sot-dialog-foot">
+        @if (mode === 'confirm') {
+          <button type="button" (click)="cancel()">{{ cancelLabel }}</button>
+          <button
+            type="button"
+            class="primary"
+            [class.danger-btn]="danger"
+            (click)="confirm()"
+          >{{ confirmLabel }}</button>
+        } @else {
+          <button type="button" class="primary" (click)="confirm()">{{ alertLabel }}</button>
+        }
+      </div>
+    </div>
+  </div>
+}

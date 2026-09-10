@@ -1,0 +1,82 @@
+<div class="prueba-casos-panel">
+  <div class="lista-head">
+    <div>
+      <strong class="section-title">Módulos y pruebas</strong>
+      <p class="muted mt-xs">Gestioná módulos. La regresión se ejecuta desde <a routerLink="/runner">Runner</a>.</p>
+    </div>
+    <div class="actions actions-tight">
+      <button type="button" (click)="refresh.emit()">Actualizar</button>
+      <button type="button" [disabled]="!puedeDeshacer" (click)="deshacer.emit()">Deshacer</button>
+    </div>
+  </div>
+  @if (deshacerHint) {
+    <p class="muted small mb-sm">{{ deshacerHint }}</p>
+  }
+
+  @for (m of modulos; track m.id) {
+    <details class="prueba-grupo-block" [open]="isOpen(m.id)">
+      <summary (click)="$event.preventDefault(); toggleGrupo.emit(m.id)">
+        <span class="grupo-name" [attr.title]="m.nombre">{{ m.nombre }}</span>
+        <span class="grupo-meta">{{ m.fijo ? 'Módulo fijo' : 'Testing' }} · {{ m.pruebas.length }}</span>
+        <span class="grupo-actions desktop-only" (click)="$event.stopPropagation()">
+          <button type="button" class="btn-link-text" (click)="agregarPrueba.emit(m)">Agregar</button>
+          <button type="button" class="btn-link-text" (click)="abrirRename.emit({ m, ev: $event })">Renombrar</button>
+          <button type="button" class="btn-link-text danger" (click)="eliminarModulo.emit({ m, ev: $event })">Eliminar</button>
+        </span>
+        <span class="grupo-menu-wrap mobile-only" (click)="$event.stopPropagation()">
+          <button type="button" class="btn-menu" (click)="toggleMenu.emit({ id: m.id, ev: $event })" aria-label="Acciones">⋯</button>
+          @if (menuModuloId === m.id) {
+            <div class="grupo-menu">
+              <button type="button" (click)="agregarPrueba.emit(m)">Agregar prueba</button>
+              <button type="button" (click)="abrirRename.emit({ m, ev: $event })">Renombrar</button>
+              <button type="button" class="danger" (click)="eliminarModulo.emit({ m, ev: $event })">Eliminar</button>
+            </div>
+          }
+        </span>
+      </summary>
+
+      @if (renameId === m.id) {
+        <div class="prueba-ren-box">
+          <p class="rename-ask">¿Cambiar el nombre del módulo?</p>
+          <input
+            type="text"
+            [ngModel]="renameValue"
+            (ngModelChange)="renameValueChange.emit($event)"
+            class="ren-input"
+          />
+          <div class="actions mt-sm">
+            <button type="button" class="primary" (click)="confirmRename.emit({ m, ev: $event })">Aceptar</button>
+            <button type="button" (click)="cancelRename.emit($event)">Rechazar</button>
+          </div>
+        </div>
+      }
+
+      <div class="prueba-grupo-body">
+        @if (!m.pruebas.length) {
+          <p class="muted small">Sin pruebas. Tocá <strong>Agregar</strong>.</p>
+        }
+        @for (p of m.pruebas; track p.id) {
+          <div class="prueba-caso-item">
+            <div class="caso-main">
+              <div>
+                <strong>{{ p.titulo }}</strong>
+                <span class="badge" [class.prueba]="p.generada">{{ p.generada ? 'prueba' : 'suite' }}</span>
+              </div>
+              <div class="muted small">{{ p.corto }}</div>
+            </div>
+            <div class="caso-actions">
+              <button type="button" (click)="toggleGherkin.emit(p)">Gherkin</button>
+              <button type="button" class="primary" (click)="editarPrueba.emit(p)">Editar</button>
+              <button type="button" class="danger-outline" (click)="eliminarPrueba.emit(p)">Eliminar</button>
+            </div>
+            @if (gherkinOpen[p.id] !== undefined) {
+              <pre class="prueba-caso-gherkin">{{ gherkinOpen[p.id] }}</pre>
+            }
+          </div>
+        }
+      </div>
+    </details>
+  } @empty {
+    <p class="muted">No hay módulos para mostrar.</p>
+  }
+</div>

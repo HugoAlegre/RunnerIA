@@ -1,0 +1,138 @@
+<section class="mapeo panel">
+  <header class="mapeo-top">
+    <div class="mapeo-title">
+      <h2>Mapeo UI</h2>
+      @if (proyectoNombre()) {
+        <span class="pill proj" [class.sot]="esPlantillaSot()">{{ proyectoNombre() }}</span>
+      }
+    </div>
+    <p class="muted tiny">Graba clics → XPath + JSON en <code>mapeos-ui/</code>. Cualquier proyecto; solo URL obligatoria.</p>
+  </header>
+
+  <div class="toolbar panel-soft">
+    <div class="toolbar-row">
+      <input
+        type="url"
+        class="url-in"
+        [(ngModel)]="url"
+        [disabled]="activa() || busy()"
+        placeholder="URL de la aplicación"
+        aria-label="URL de la aplicación"
+      />
+      @if (!activa()) {
+        <button type="button" class="primary" (click)="iniciar()" [disabled]="busy() || !url.trim()">
+          Grabar
+        </button>
+      } @else {
+        <button type="button" class="danger" (click)="detener()" [disabled]="busy()">Detener</button>
+      }
+      <button type="button" (click)="exportarJson()" [disabled]="!hayContenido()" title="Descargar JSON">JSON</button>
+      <button type="button" (click)="enviarAGenerar()" [disabled]="busy() || !hayContenido()">Generar</button>
+    </div>
+
+    <details class="opts">
+      <summary>Opciones</summary>
+      <div class="opts-body">
+        <label class="chk">
+          <input type="checkbox" [(ngModel)]="headless" [disabled]="activa() || busy()" />
+          Sin ventana (headless)
+        </label>
+        @if (esPlantillaSot()) {
+          <label class="chk">
+            <input type="checkbox" [(ngModel)]="loginAutomatico" [disabled]="activa() || busy()" />
+            Login automático SOT (Keycloak + sucursal)
+          </label>
+          @if (loginAutomatico && (usuarioConfig() || sucursalObjetivo())) {
+            <span class="muted tiny">
+              {{ usuarioConfig() }} · {{ sucursalObjetivo() }}
+            </span>
+          }
+        }
+      </div>
+    </details>
+
+    @if (activa()) {
+      <p class="status grabando">Grabando · {{ eventos().length }} clic(s) · {{ urlActual() || url }}</p>
+    }
+    @if (info()) {
+      <p class="status ok">{{ info() }}</p>
+    }
+    @if (guardadoEn()) {
+      <p class="status guardado">
+        Archivo: <code>{{ guardadoEn() }}</code>
+        @if (guardadoAbsoluto()) {
+          <span class="muted tiny"> · {{ guardadoAbsoluto() }}</span>
+        }
+      </p>
+    }
+    @if (error()) {
+      <p class="err">{{ error() }}</p>
+    }
+  </div>
+
+  @if (hayContenido()) {
+    <div class="preview panel-soft">
+      <div class="preview-tabs">
+        <button type="button" [class.active]="previewTab() === 'resumen'" (click)="setPreviewTab('resumen')">
+          Resumen ({{ eventos().length }})
+        </button>
+        <button type="button" [class.active]="previewTab() === 'gherkin'" (click)="setPreviewTab('gherkin')">
+          Gherkin
+        </button>
+        <button type="button" [class.active]="previewTab() === 'json'" (click)="setPreviewTab('json')">
+          JSON
+        </button>
+      </div>
+
+      @if (previewTab() === 'resumen') {
+        <ul class="ev-compact">
+          @for (ev of eventos(); track ev.orden) {
+            <li>
+              <button type="button" class="ev-row" (click)="toggleEvento(ev.orden)">
+                <span class="n">#{{ ev.orden }}</span>
+                <span class="tag">{{ ev.tag }}</span>
+                <span class="txt">{{ ev.texto || '—' }}</span>
+                <span class="xp">{{ ev.xpathPlaywright || ev.xpathUtil }}</span>
+              </button>
+              @if (eventoExpandido() === ev.orden) {
+                <div class="ev-detail">
+                  <code>{{ ev.xpathPlaywright || ev.xpathUtil }}</code>
+                  <button type="button" class="btn-link-text" (click)="copiar(ev.xpathPlaywright || ev.xpathUtil)">Copiar</button>
+                  @if (ev.coincidenciasCodigo?.length) {
+                    @for (h of ev.coincidenciasCodigo!; track trackCoincidencia($index, h)) {
+                      <div class="hit tiny">
+                        <span>{{ h.repoId }} · {{ h.archivo }}:{{ h.linea }}</span>
+                      </div>
+                    }
+                  }
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (previewTab() === 'gherkin') {
+        <pre class="preview-pre">{{ gherkinPreview() || '—' }}</pre>
+      }
+
+      @if (previewTab() === 'json') {
+        <pre class="preview-pre">{{ jsonPreview() || '—' }}</pre>
+      }
+    </div>
+  } @else if (!activa()) {
+    <p class="muted tiny hint">Iniciá la grabación, hacé clics en Chromium y detené. Se guarda solo al detener.</p>
+  }
+
+  <details class="buscar-mini">
+    <summary>Búsqueda en código (opcional)</summary>
+    <div class="buscar-body">
+      <input type="text" [(ngModel)]="consultaManual" placeholder="Texto o selector" />
+      <input type="text" [(ngModel)]="xpathManual" placeholder="XPath (opcional)" />
+      <button type="button" (click)="buscarManual()" [disabled]="busy()">Buscar</button>
+      @for (h of hitsManual(); track trackCoincidencia($index, h)) {
+        <div class="hit tiny"><span>{{ h.repoId }} · {{ h.archivo }}:{{ h.linea }}</span></div>
+      }
+    </div>
+  </details>
+</section>

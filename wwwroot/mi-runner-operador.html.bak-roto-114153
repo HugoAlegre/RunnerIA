@@ -1,0 +1,4722 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Runner de pruebas SOT</title>
+  <script>
+    try {
+      var _t = localStorage.getItem("sot-runner-theme");
+      if (_t === "dark" || _t === "light") document.documentElement.setAttribute("data-theme", _t);
+    } catch (e) {}
+  </script>
+  <style>
+    :root,
+    [data-theme="light"] {
+      --bg: #eef2f7;
+      --panel: #ffffff;
+      --panel-soft: #fbfcfe;
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #d8dee9;
+      --line-hover: #b8c4d6;
+      --navy: #0f2540;
+      --selected: #0f2540;
+      --accent: #1e9be6;
+      --accent-dark: #1478bd;
+      --ok: #0a7a3e;
+      --warn: #9a6700;
+      --btn-bg: #ffffff;
+      --btn-hover: #f8fafc;
+      --tag-bg: #e0f2fe;
+      --tag-fg: #075985;
+      --count-bg: rgba(14, 165, 233, 0.15);
+      --count-fg: #0369a1;
+      --log-bg: #0f172a;
+      --log-fg: #e2e8f0;
+      --shadow: 0 8px 24px rgba(15, 37, 64, 0.18);
+      --app-pad: clamp(12px, 2vw, 28px);
+      --app-max: min(1280px, 100%);
+      --radius: clamp(12px, 1.2vw, 18px);
+      --chrome: 0px;
+      --vh: 1vh;
+      color-scheme: light;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0b1220;
+      --panel: #151e2e;
+      --panel-soft: #1a2438;
+      --text: #e8eef7;
+      --muted: #9aa8bc;
+      --line: #2a3850;
+      --line-hover: #3d5070;
+      --navy: #9ec5ea;
+      --selected: #1e9be6;
+      --accent: #3eb0f0;
+      --accent-dark: #1e9be6;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --btn-bg: #1a2438;
+      --btn-hover: #223049;
+      --tag-bg: #1e3a5f;
+      --tag-fg: #93c5fd;
+      --count-bg: rgba(62, 176, 240, 0.2);
+      --count-fg: #7dd3fc;
+      --log-bg: #060a12;
+      --log-fg: #d1dbe8;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      color-scheme: dark;
+    }
+
+    @supports (height: 100dvh) {
+      :root, [data-theme="light"], [data-theme="dark"] { --vh: 1dvh; }
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      height: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      min-height: calc(var(--vh) * 100);
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: clamp(13px, 0.85rem + 0.15vw, 15px);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .app {
+      width: var(--app-max);
+      max-width: calc(100% - (var(--app-pad) * 2));
+      margin: 0 auto;
+      padding: var(--app-pad) 0 calc(var(--app-pad) * 1.5);
+    }
+
+    .brandbar {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: clamp(12px, 2vw, 20px);
+      background: linear-gradient(135deg, var(--navy) 0%, #16375e 55%, #1e4d7d 100%);
+      border-radius: var(--radius);
+      padding: clamp(10px, 1.2vw, 14px) clamp(14px, 2vw, 22px);
+      margin-bottom: clamp(12px, 1.5vw, 18px);
+      box-shadow: var(--shadow);
+    }
+
+    .brandbar::after {
+      content: "";
+      position: absolute;
+      top: -80%;
+      right: -8%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(30, 155, 230, 0.28) 0%, rgba(30, 155, 230, 0) 70%);
+      pointer-events: none;
+    }
+
+    .brandbar-right {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .theme-toggle {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 999px;
+      padding: 2px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .theme-toggle button {
+      border: 0;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.65);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      min-width: 0;
+    }
+
+    .theme-toggle button:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .theme-toggle button.active {
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--navy);
+    }
+
+    [data-theme="dark"] .theme-toggle button.active {
+      color: #0f2540;
+    }
+
+    .brandbar img {
+      position: relative;
+      z-index: 1;
+      height: clamp(36px, 4.5vw, 48px);
+      width: auto;
+      background: #ffffff;
+      padding: 6px 12px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .brandbar-title {
+      text-align: right;
+      color: #ffffff;
+      min-width: 0;
+    }
+
+    .brandbar-title .t {
+      display: block;
+      font-size: clamp(15px, 1.4vw, 22px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    .brandbar-title .s {
+      display: block;
+      margin-top: 2px;
+      font-size: clamp(11px, 1vw, 13px);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #a9c6e6;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: clamp(10px, 1.2vw, 16px);
+      flex-wrap: wrap;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(13px, 1.1vw, 15px);
+      flex: 1 1 220px;
+      min-width: 0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(240px, 32%) minmax(0, 1fr);
+      gap: clamp(10px, 1.2vw, 16px);
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: clamp(12px, 1.4vw, 16px);
+    }
+
+    .panel-nav {
+      /* Un solo scroll de página: sin panel lateral con overflow propio */
+      position: static;
+      max-height: none;
+      overflow: visible;
+    }
+
+    /* ---- Grupos de escenarios vs lista de casos ---- */
+    .nav-section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      font-weight: 800;
+      margin: 0 0 8px;
+    }
+
+    /* Selector de escenarios (dropdown) */
+    .runner-select {
+      position: relative;
+      margin-bottom: 14px;
+      z-index: 5;
+    }
+
+    .runner-select-trigger {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--panel-soft);
+      color: var(--text);
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+
+    .runner-select-trigger:hover {
+      border-color: var(--line-hover);
+      background: var(--btn-hover);
+    }
+
+    .runner-select.open .runner-select-trigger {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(30, 155, 230, 0.18);
+    }
+
+    .runner-select-trigger-text {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 2px;
+    }
+
+    .runner-select-trigger-text strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .runner-select-trigger-text span {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .runner-select-chevron {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .runner-select.open .runner-select-chevron {
+      transform: rotate(180deg);
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      border-color: transparent;
+    }
+
+    .runner-select-menu {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      max-height: min(320px, 50vh);
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 6px;
+    }
+
+    .runner-select.open .runner-select-menu { display: grid; gap: 2px; }
+
+    .runner-select-option {
+      width: 100%;
+      display: grid;
+      gap: 2px;
+      text-align: left;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 9px 10px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .runner-select-option:hover {
+      background: var(--panel-soft);
+      border-color: var(--line);
+    }
+
+    .runner-select-option.active {
+      background: var(--selected);
+      color: #fff;
+      border-color: var(--selected);
+    }
+
+    .runner-select-option .opt-name {
+      font-size: 12.5px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .runner-select-option .opt-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      opacity: 0.78;
+      line-height: 1.3;
+    }
+
+    .runner-select-option.active .opt-meta { opacity: 0.9; }
+
+    .runner-select-option .opt-count {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: var(--count-bg);
+      color: var(--count-fg);
+    }
+
+    .runner-select-option.active .opt-count {
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
+    }
+
+    .cat-hint {
+      display: none;
+      margin: -6px 0 12px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .cat-hint.visible { display: block; }
+
+    .list-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      font-weight: 800;
+      margin: 0 0 8px;
+    }
+
+    /* ---- Lista de escenarios (casos) ---- */
+    .scenario-list { display: grid; gap: 5px; }
+
+    .scenario {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: var(--panel-soft);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .scenario:hover:not(.selected) {
+      border-color: var(--line-hover);
+    }
+
+    .scenario.selected {
+      background: var(--selected);
+      color: white;
+      border-color: var(--selected);
+    }
+
+    .scenario-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .scenario small {
+      color: inherit;
+      opacity: 0.7;
+      font-weight: 800;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .scenario strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 12.5px;
+      line-height: 1.3;
+    }
+
+    .scenario span {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-top: 2px;
+      color: inherit;
+      opacity: 0.72;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .badge {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 2px 6px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .badge.feliz { background: #dcfce7; color: #166534; }
+    .badge.negativo { background: #fee2e2; color: #b42318; }
+    .badge.smoke { background: #e0e7ff; color: #3730a3; }
+    [data-theme="dark"] .badge.feliz { background: #14532d; color: #86efac; }
+    [data-theme="dark"] .badge.negativo { background: #7f1d1d; color: #fca5a5; }
+    [data-theme="dark"] .badge.smoke { background: #312e81; color: #c7d2fe; }
+    .scenario.selected .badge { filter: brightness(1.05); }
+
+    /* ---- Detalle ---- */
+    .detail { display: grid; gap: clamp(12px, 1.4vw, 16px); }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .detail-head > div {
+      min-width: 0;
+    }
+
+    .detail h2 {
+      margin: 0;
+      font-size: clamp(18px, 2vw, 24px);
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    .detail > div > p,
+    .detail-head p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 620px;
+    }
+
+    .detail h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+    }
+
+    .tag {
+      border-radius: 999px;
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      padding: 5px 10px;
+      font-weight: 800;
+      font-size: 11px;
+      flex-shrink: 0;
+      line-height: 1.45;
+      max-width: min(420px, 45%);
+      white-space: normal;
+      overflow-wrap: anywhere;
+      text-align: right;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(8px, 1vw, 12px);
+    }
+
+    .info {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: var(--panel-soft);
+      min-width: 0;
+    }
+
+    .info small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .info strong {
+      font-size: 16px;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .checks { display: grid; gap: 8px; }
+
+    .check {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: flex-start;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+      overflow-wrap: anywhere;
+    }
+
+    details.fold {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-soft);
+      padding: 0;
+    }
+
+    details.fold > summary {
+      cursor: pointer;
+      list-style: none;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 10px 12px;
+      color: var(--navy);
+      user-select: none;
+    }
+
+    details.fold > summary::-webkit-details-marker { display: none; }
+
+    details.fold > summary::after {
+      content: "▾";
+      float: right;
+      opacity: 0.55;
+      font-weight: 700;
+    }
+
+    details.fold[open] > summary::after { content: "▴"; }
+
+    details.fold .fold-body {
+      padding: 0 12px 12px;
+    }
+
+    .check::before {
+      content: "☐";
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .check span {
+      min-width: 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 2px;
+      align-items: center;
+    }
+
+    .actions-run {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-soft);
+    }
+
+    .actions-run .btn-run {
+      margin-left: auto;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--btn-bg);
+      color: var(--text);
+      border-radius: 9px;
+      padding: 7px 11px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    button:hover {
+      background: var(--btn-hover);
+      border-color: var(--line-hover);
+    }
+
+    button:active { transform: scale(0.98); }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .primary:hover {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+      color: white;
+    }
+
+    .btn-run {
+      padding: 8px 14px;
+      font-size: 12.5px;
+      font-weight: 800;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-bar.visible { display: flex; }
+    .status-bar.info { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+    .status-bar.ok { background: #dcfce7; color: var(--ok); border: 1px solid #bbf7d0; }
+    .status-bar.error { background: #fee2e2; color: #b42318; border: 1px solid #fecaca; }
+    .status-bar.warn { background: #fef3c7; color: var(--warn); border: 1px solid #fde68a; }
+
+    .server-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 0;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      flex-shrink: 0;
+    }
+
+    .server-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #9ca3af;
+    }
+
+    .server-pill.offline .dot { background: #ef4444; }
+    .server-pill.busy .dot { background: var(--warn); }
+
+    /* Indicador de corrida (sin inundar con log técnico) */
+    .run-progress {
+      display: none;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+    }
+
+    .run-progress.visible { display: flex; }
+
+    .run-progress.loading,
+    .run-progress.running {
+      border-color: #bae6fd;
+      background: #f0f9ff;
+    }
+
+    .run-progress.ok {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+
+    .run-progress.fail {
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    [data-theme="dark"] .run-progress.loading,
+    [data-theme="dark"] .run-progress.running {
+      border-color: #1e3a5f;
+      background: #132337;
+    }
+
+    [data-theme="dark"] .run-progress.ok {
+      border-color: #14532d;
+      background: #10241a;
+    }
+
+    [data-theme="dark"] .run-progress.fail {
+      border-color: #7f1d1d;
+      background: #2a1212;
+    }
+
+    .run-progress-icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 800;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+    }
+
+    .run-progress.loading .run-progress-icon,
+    .run-progress.running .run-progress-icon {
+      border-color: #7dd3fc;
+      color: #0369a1;
+    }
+
+    .run-progress.ok .run-progress-icon {
+      border-color: #86efac;
+      color: var(--ok);
+      background: #dcfce7;
+    }
+
+    .run-progress.fail .run-progress-icon {
+      border-color: #fca5a5;
+      color: #b42318;
+      background: #fee2e2;
+    }
+
+    [data-theme="dark"] .run-progress.ok .run-progress-icon {
+      background: #14532d;
+      color: #86efac;
+    }
+
+    [data-theme="dark"] .run-progress.fail .run-progress-icon {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
+
+    .run-progress-spin {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2.5px solid rgba(3, 105, 161, 0.25);
+      border-top-color: #0369a1;
+      animation: runSpin 0.7s linear infinite;
+    }
+
+    [data-theme="dark"] .run-progress-spin {
+      border-color: rgba(125, 211, 252, 0.25);
+      border-top-color: #7dd3fc;
+    }
+
+    @keyframes runSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .run-progress-main {
+      flex: 1;
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .run-progress-phase {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .run-progress.loading .run-progress-phase,
+    .run-progress.running .run-progress-phase { color: #0369a1; }
+    .run-progress.ok .run-progress-phase { color: var(--ok); }
+    .run-progress.fail .run-progress-phase { color: #b42318; }
+
+    [data-theme="dark"] .run-progress.loading .run-progress-phase,
+    [data-theme="dark"] .run-progress.running .run-progress-phase { color: #7dd3fc; }
+    [data-theme="dark"] .run-progress.fail .run-progress-phase { color: #fca5a5; }
+
+    .run-progress-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .run-progress-sub {
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .run-progress-actions {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .run-progress-actions.visible { display: flex; }
+
+    .log-panel {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--log-bg);
+      color: var(--log-fg);
+      padding: 12px;
+      max-height: 180px;
+      overflow: auto;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 11.5px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-top: 8px;
+    }
+
+    .log-panel.visible { display: block; }
+
+    .run-log-fold {
+      display: none;
+      margin-top: 4px;
+    }
+
+    .run-log-fold.visible { display: block; }
+
+    .run-log-fold summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      user-select: none;
+    }
+
+    .run-log-fold summary:hover { color: var(--text); }
+
+    .evidencia-actions {
+      border: 1px solid #bbf7d0;
+      background: #f0fdf4;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-top: 12px;
+    }
+
+    .evidencia-actions.is-fail {
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    [data-theme="dark"] .evidencia-actions {
+      border-color: #14532d;
+      background: #10241a;
+    }
+
+    [data-theme="dark"] .evidencia-actions.is-fail {
+      border-color: #7f1d1d;
+      background: #2a1212;
+    }
+
+    .evidencia-actions-title {
+      font-weight: 800;
+      color: var(--ok);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .evidencia-actions.is-fail .evidencia-actions-title {
+      color: #b42318;
+    }
+
+    [data-theme="dark"] .evidencia-actions.is-fail .evidencia-actions-title {
+      color: #fca5a5;
+    }
+
+    .evidencia-ruta {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+      word-break: break-all;
+      line-height: 1.4;
+    }
+    a.btn-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: var(--btn-bg);
+      border-radius: 10px;
+      padding: 7px 12px;
+      font-weight: 700;
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--text);
+      cursor: pointer;
+    }
+    a.btn-link:hover { border-color: var(--line-hover); background: var(--btn-hover); }
+    a.btn-link.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    a.btn-link.primary:hover {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+    }
+    a.btn-link.is-disabled,
+    a.btn-link[aria-disabled="true"] {
+      opacity: 0.45;
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+
+    .informe-embed-wrap {
+      margin-top: 14px;
+      border: 1px solid #bbf7d0;
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    .informe-embed-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px 14px;
+      padding: 10px 14px;
+      background: var(--panel-soft);
+      border-bottom: 1px solid #bbf7d0;
+      font-size: 13px;
+    }
+    [data-theme="dark"] .informe-embed-wrap,
+    [data-theme="dark"] .informe-embed-head { border-color: #14532d; }
+    .informe-embed-head strong { color: var(--ok); }
+    .informe-embed-head span { color: var(--muted); font-size: 12px; }
+    .informe-frame {
+      display: block;
+      width: 100%;
+      height: clamp(280px, 52vh, 720px);
+      height: clamp(280px, calc(var(--vh) * 52), 720px);
+      border: 0;
+      background: var(--panel);
+    }
+
+    .file-warning {
+      display: none;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      color: #92400e;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .file-warning.visible { display: block; }
+    .file-warning a { color: #075985; font-weight: 700; }
+    .file-warning code { background: #fef3c7; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
+
+    /* ---- Navegación de vistas ---- */
+    .nav {
+      display: flex;
+      gap: 6px;
+      margin-bottom: clamp(10px, 1.2vw, 16px);
+      flex-wrap: wrap;
+    }
+
+    .nav-item {
+      border: 1px solid var(--line);
+      background: var(--btn-bg);
+      border-radius: 10px;
+      padding: 7px 12px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--muted);
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .nav-item:hover:not(.active) { border-color: var(--line-hover); color: var(--text); }
+
+    .nav-item.active {
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
+    }
+
+    [data-theme="dark"] .nav-item.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ---- Vista Configuración ---- */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .config-files { display: grid; gap: 8px; }
+
+    .config-file {
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: var(--panel-soft);
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+
+    .config-file:hover:not(.active) { border-color: var(--line-hover); transform: translateY(-1px); }
+
+    .config-file.active {
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
+    }
+
+    .config-file .fname {
+      display: block;
+      font-weight: 800;
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .config-file .fdesc {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      opacity: 0.72;
+    }
+
+    .config-file.missing { opacity: 0.5; }
+
+    .config-editor { display: grid; gap: 12px; }
+
+    .config-editor textarea {
+      width: 100%;
+      min-height: 460px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: vertical;
+      background: var(--log-bg);
+      color: var(--log-fg);
+      tab-size: 2;
+    }
+
+    .config-editor textarea:focus { outline: 2px solid var(--accent); }
+
+    .config-secret-note {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* ---- Parametría (formulario) ---- */
+    .param-toggle {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .param-toggle button {
+      border: 0;
+      border-radius: 0;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      background: var(--btn-bg);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .param-toggle button.active { background: var(--navy); color: white; }
+    [data-theme="dark"] .param-toggle button.active { background: var(--accent); }
+
+    .param-form { display: grid; gap: 18px; }
+    .param-form > div > label,
+    #view-piloto label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    #view-piloto input[type="text"],
+    #view-piloto input[type="url"],
+    #view-piloto input[type="email"],
+    #view-piloto input[type="password"],
+    #view-piloto textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-soft);
+      color: var(--text);
+      font: inherit;
+    }
+    #view-piloto textarea { resize: vertical; min-height: 72px; }
+
+    .piloto-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 9999;
+      min-width: min(420px, calc(100vw - 32px));
+      max-width: 520px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .piloto-toast.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .piloto-toast strong { display: block; color: var(--ok); font-size: 14px; }
+    .piloto-toast span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .piloto-toast button {
+      flex-shrink: 0;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.danger-outline {
+      border-color: #f5c2c0;
+      color: #b42318;
+      background: #fff5f5;
+    }
+    [data-theme="dark"] button.danger-outline {
+      border-color: #7f1d1d;
+      color: #fca5a5;
+      background: #2a1515;
+    }
+
+    .param-intro {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a5f;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .param-section {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    .param-section > summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 14px 16px;
+      background: var(--panel-soft);
+      font-weight: 800;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .param-section > summary::-webkit-details-marker { display: none; }
+    .param-section > summary::before {
+      content: "▸";
+      font-size: 12px;
+      color: var(--muted);
+      transition: transform 0.15s;
+    }
+    .param-section[open] > summary::before { transform: rotate(90deg); }
+    .param-section > summary .sec-desc {
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+    .param-body { padding: 8px 16px 16px; display: grid; gap: 14px; }
+
+    .param-field { display: grid; gap: 5px; }
+    .param-field > label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-word;
+    }
+    .param-field .fhelp { font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .param-field input[type="text"],
+    .param-field textarea,
+    .param-field select {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 13px;
+      font-family: inherit;
+      width: 100%;
+      background: var(--btn-bg);
+      color: var(--text);
+    }
+    .param-field textarea {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 12px;
+      min-height: 56px;
+      resize: vertical;
+      line-height: 1.4;
+    }
+    .param-field input:focus,
+    .param-field textarea:focus,
+    .param-field select:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+    .param-note {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--panel-soft);
+      border-left: 3px solid var(--line);
+      padding: 6px 10px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* ---- Configuración del cliente (simple) ---- */
+    .cliente-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin: 18px 0 4px;
+    }
+    .cliente-group-title {
+      grid-column: 1 / -1;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 6px;
+      margin-top: 6px;
+    }
+    .cliente-field { display: grid; gap: 6px; align-content: start; }
+    .cliente-field label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      min-height: 1.25em;
+      line-height: 1.25;
+    }
+    .cliente-field input {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--btn-bg);
+      color: var(--text);
+      width: 100%;
+      min-width: 0;
+    }
+    .cliente-field input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+    .cliente-field .hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+      min-height: 1.4em;
+    }
+    .cliente-field .hint.warn { color: #92400e; }
+    .cliente-field .hint.set { color: var(--ok); }
+
+    /* Sección Acceso al SOT: 2 columnas fijas, campos alineados */
+    .cliente-section-acceso {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px 20px;
+      align-items: start;
+    }
+    @media (max-width: 700px) {
+      .cliente-section-acceso { grid-template-columns: 1fr; }
+    }
+    .cliente-info {
+      grid-column: 1 / -1;
+      margin: 0 0 4px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      border-radius: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .cliente-info b { color: var(--muted); font-weight: 600; }
+    .btn-avanzada {
+      margin-top: 20px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    #configAvanzada { margin-top: 14px; }
+
+    /* ---- Lista de usuarios SOT ---- */
+    .usuarios-sot-full { grid-column: 1 / -1; }
+    .usuarios-sot-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 12px; }
+    .usuarios-sot-head,
+    .usuario-sot-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 40px;
+      gap: 10px;
+      align-items: center;
+    }
+    .usuarios-sot-head {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--muted);
+      padding: 0 2px 6px;
+    }
+    .usuario-sot-row { margin-bottom: 10px; }
+    .usuario-sot-row input {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 13px;
+      font-family: inherit;
+      width: 100%;
+      background: var(--btn-bg);
+      color: var(--text);
+    }
+    .usuario-sot-row input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+    .usuario-sot-row .rol-principal {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-dark);
+      margin-top: 3px;
+      display: block;
+    }
+    .btn-quitar-sot {
+      border: 1px solid var(--line);
+      background: var(--btn-bg);
+      color: #b42318;
+      border-radius: 10px;
+      width: 100%;
+      height: 38px;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+    }
+    .btn-quitar-sot:hover { border-color: #fecaca; background: var(--btn-hover); }
+    .btn-quitar-sot:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-agregar-sot {
+      border: 1px dashed var(--line);
+      background: var(--panel-soft);
+      color: var(--accent-dark);
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 10px 14px;
+      width: 100%;
+    }
+    .btn-agregar-sot:hover { border-color: var(--accent); }
+    .usuario-sot-hint { font-size: 11px; color: var(--muted); margin-top: 3px; display: block; }
+    .usuario-sot-hint.set { color: var(--ok); }
+    @media (max-width: 640px) {
+      .usuarios-sot-head { display: none; }
+      .usuario-sot-row { grid-template-columns: 1fr; gap: 6px; }
+    }
+
+    /* ---- Vista Ayuda ---- */
+    .help-quick {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .help-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: var(--panel-soft);
+    }
+
+    .help-card h4 { margin: 0 0 6px; font-size: 14px; color: var(--navy); }
+    .help-card p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    .help-links { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+
+    .help-links a {
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--navy);
+      background: var(--btn-bg);
+    }
+
+    .help-links a:hover { border-color: var(--accent); }
+
+    .manual-render {
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+      line-height: 1.65;
+      max-height: clamp(280px, calc(var(--vh) * 55), 640px);
+      overflow: auto;
+    }
+
+    .manual-render h1 { font-size: 26px; color: var(--navy); margin: 18px 0 10px; }
+    .manual-render h2 { font-size: 21px; color: var(--navy); margin: 22px 0 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .manual-render h3 { font-size: 17px; color: var(--text); margin: 16px 0 8px; }
+    .manual-render p { margin: 8px 0; font-size: 14px; }
+    .manual-render ul, .manual-render ol { padding-left: 1.4em; font-size: 14px; }
+    .manual-render li { margin-bottom: 4px; }
+    .manual-render code {
+      background: var(--panel-soft);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+    }
+    .manual-render pre {
+      background: var(--log-bg);
+      color: var(--log-fg);
+      padding: 14px;
+      border-radius: 12px;
+      overflow: auto;
+      font-size: 12px;
+    }
+    .manual-render pre code { background: none; padding: 0; color: inherit; }
+    .manual-render table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 10px 0; }
+    .manual-render th, .manual-render td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+    .manual-render th { background: var(--panel-soft); }
+    .manual-render a { color: var(--accent-dark); }
+
+    /* Viewports dinámicos: laptop → monitor → ultrawide */
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: minmax(220px, 36%) minmax(0, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .detail-head { flex-direction: column; }
+      .tag {
+        max-width: 100%;
+        text-align: left;
+      }
+      .info-grid { grid-template-columns: 1fr; }
+      .config-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .brandbar {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+        padding: 12px 14px;
+      }
+      .brandbar-right {
+        flex-direction: column;
+        width: 100%;
+      }
+      .brandbar-title { text-align: center; }
+      .server-pill { margin-top: 0; }
+      .actions-run .btn-run { margin-left: 0; width: 100%; }
+    }
+
+    @media (min-width: 1600px) {
+      :root { --app-max: min(1440px, 100%); }
+      .layout { grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); }
+    }
+
+    @media (min-width: 1920px) {
+      :root { --app-max: min(1560px, 92vw); }
+    }
+
+    /* ---- Diálogo estilo Runner (reemplaza alert/confirm del navegador) ---- */
+    .sot-dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--app-pad);
+      background: rgba(15, 37, 64, 0.48);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .sot-dialog-backdrop.open { display: flex; }
+
+    [data-theme="dark"] .sot-dialog-backdrop {
+      background: rgba(0, 0, 0, 0.62);
+    }
+
+    .sot-dialog {
+      width: min(440px, 100%);
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: sotDialogIn 0.18s ease-out;
+    }
+
+    @keyframes sotDialogIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .sot-dialog-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px 12px;
+      background: linear-gradient(135deg, var(--navy) 0%, #16375e 55%, #1e4d7d 100%);
+      color: #fff;
+    }
+
+    [data-theme="dark"] .sot-dialog-head {
+      background: linear-gradient(135deg, #0f2540 0%, #1a3a5c 55%, #1e4d7d 100%);
+    }
+
+    .sot-dialog-head h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .sot-dialog-head .sot-dialog-eyebrow {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.78;
+    }
+
+    .sot-dialog-close {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .sot-dialog-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+      color: #fff;
+    }
+
+    .sot-dialog-body {
+      padding: 16px 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .sot-dialog-body p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 13.5px;
+    }
+
+    .sot-dialog-meta {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      font-size: 12.5px;
+    }
+
+    .sot-dialog-meta div {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .sot-dialog-meta .lbl {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+
+    .sot-dialog-meta .val {
+      color: var(--text);
+      font-weight: 700;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    .sot-dialog-code {
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--log-bg);
+      color: var(--log-fg);
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 11.5px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 180px;
+      overflow: auto;
+      border: 1px solid var(--line);
+    }
+
+    .sot-dialog-hint {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .sot-dialog-foot {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 18px 16px;
+    }
+
+    .sot-dialog-foot .primary {
+      min-width: 110px;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div id="fileWarning" class="file-warning" role="alert">
+      <strong>Abriste el archivo directo (file://).</strong>
+      Para que funcione el botón Ejecutar:
+      <ol style="margin:8px 0 0; padding-left:1.2em;">
+        <li>Doble clic en <code>Iniciar-Runner.bat</code> (carpeta <code>RunnerOperador</code> del repo).</li>
+        <li>Esperá que abra el navegador solo, o entrá a <a href="http://localhost:5050/" target="_blank" rel="noopener">http://localhost:5050/</a>.</li>
+        <li><strong>No cierres</strong> la ventana negra del servidor mientras usás el runner.</li>
+      </ol>
+    </div>
+
+    <div class="brandbar">
+      <img src="logo-accusys.png" alt="Accusys" />
+      <div class="brandbar-right">
+        <div class="brandbar-title">
+          <span class="t">Runner SOT</span>
+          <span class="s">Automatización · Testing</span>
+        </div>
+        <div class="theme-toggle" role="group" aria-label="Tema">
+          <button type="button" id="btnThemeLight" data-theme-set="light" title="Tema claro">Claro</button>
+          <button type="button" id="btnThemeDark" data-theme-set="dark" title="Tema oscuro">Oscuro</button>
+        </div>
+      </div>
+    </div>
+
+    <header>
+      <p id="headerSubtitle">Elegí un grupo de escenarios, abrí el caso, revisá prerequisitos y ejecutá.</p>
+      <div id="serverPill" class="server-pill offline" title="Estado del servidor local">
+        <span class="dot"></span>
+        <span id="serverText">Servidor: sin conexión</span>
+      </div>
+    </header>
+
+    <nav class="nav">
+      <button type="button" class="nav-item active" data-view="runner">Runner</button>
+      <button type="button" class="nav-item" data-view="piloto">Generar con asistente</button>
+      <button type="button" class="nav-item" data-view="config">Configuración</button>
+      <button type="button" class="nav-item" data-view="ayuda">Ayuda</button>
+    </nav>
+
+    <!-- VISTA: RUNNER -->
+    <section id="view-runner" class="view active">
+      <section class="layout">
+        <aside class="panel panel-nav">
+          <div class="nav-section-label">Escenarios</div>
+          <div id="runnerSelect" class="runner-select">
+            <button type="button" class="runner-select-trigger" id="runnerSelectTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="runner-select-trigger-text">
+                <strong id="runnerSelectLabel">—</strong>
+                <span id="runnerSelectSub">Elegí un grupo</span>
+              </span>
+              <span class="runner-select-chevron" aria-hidden="true">▾</span>
+            </button>
+            <div class="runner-select-menu" id="runnerSelectMenu" role="listbox"></div>
+          </div>
+          <p id="catHint" class="cat-hint"></p>
+          <div class="list-title" id="listTitle">Casos</div>
+          <div id="lista" class="scenario-list"></div>
+        </aside>
+
+        <section id="detalle" class="panel detail">
+          <div class="detail-head">
+            <div>
+              <h2 id="titulo">—</h2>
+              <p id="descripcion">Seleccioná un escenario de la lista.</p>
+            </div>
+            <span id="tag" class="tag">—</span>
+          </div>
+
+          <div class="info-grid">
+            <div class="info"><small>Sucursal</small><strong id="sucursal">—</strong></div>
+            <div class="info"><small>Usuario</small><strong id="usuario">—</strong></div>
+            <div class="info"><small>Resultado esperado</small><strong id="resultado">—</strong></div>
+          </div>
+
+          <details class="fold" open>
+          <summary>Mini manual — cómo escribir los casos</summary>
+          <div class="fold-body" style="font-size:14px; line-height:1.55; color:var(--text);">
+            <p style="margin:0 0 10px;"><strong>Objetivo:</strong> describir el caso en lenguaje claro. El asistente propone un <code>.feature</code>; vos lo revisás, editás título/detalle y lo guardás en un grupo de testing.</p>
+
+            <h4 style="margin:12px 0 6px; color:var(--navy);">Qué conviene indicar (en general)</h4>
+            <ul style="margin:0; padding-left:1.2em;">
+              <li><strong>Qué se prueba:</strong> pantalla o flujo (ej. Parametría, Apertura, Otros Ingresos, Pases).</li>
+              <li><strong>Datos concretos:</strong> sucursal si aplica, moneda, importe fijo, usuario, correlativo, etc.</li>
+              <li><strong>Pasos:</strong> qué hacer, en orden (navegar → elegir → cargar → confirmar).</li>
+              <li><strong>Resultado esperado:</strong> qué debe verse o quedar registrado.</li>
+            </ul>
+            <p style="margin:10px 0 0; font-size:13px; color:var(--muted);">Si un dato es fijo (ej. importe <code>100</code>), escribilo: no lo reemplaza por aleatorio. Si no lo indicás, el borrador puede usar valores genéricos/aleatorios.</p>
+
+            <h4 style="margin:12px 0 6px; color:var(--navy);">Campos opcionales del formulario</h4>
+            <ul style="margin:0; padding-left:1.2em;">
+              <li><strong>Moneda / Importe:</strong> útiles cuando el caso opera cajas (aclaran el borrador).</li>
+              <li><strong>Título y detalle:</strong> se muestran en el Runner como los testing de regresión.</li>
+              <li><strong>Grupo:</strong> elegí uno existente o creá uno nuevo al guardar.</li>
+            </ul>
+
+            <h4 style="margin:12px 0 6px; color:var(--navy);">Flujo recomendado</h4>
+            <ol style="margin:0; padding-left:1.2em;">
+              <li>Escribí el caso en claro (y datos fijos si hace falta).</li>
+              <li><strong>Analizar</strong> → revisá el borrador.</li>
+              <li>Ajustá título y detalle.</li>
+              <li>Guardá en un grupo de testing.</li>
+              <li>En Runner: grupo → caso → <strong>Ejecutar</strong>.</li>
+            </ol>
+
+            <h4 style="margin:12px 0 6px; color:var(--navy);">Ejemplo que ya funciona (Otros Ingresos)</h4>
+            <p style="margin:0 0 8px; font-size:13px; color:var(--muted);">Este patrón ya está cableado: caja por etiqueta UI e importe fijo. Se deja como referencia útil.</p>
+            <table style="width:100%; border-collapse:collapse; font-size:13px; margin:0 0 8px;">
+              <thead>
+                <tr style="text-align:left; border-bottom:1px solid var(--line);">
+                  <th style="padding:6px 8px;">En el selector (UI)</th>
+                  <th style="padding:6px 8px;">Cómo pedirlo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--line);"><td style="padding:6px 8px;"><code>Normal | $</code></td><td style="padding:6px 8px;">Pesos</td></tr>
+                <tr style="border-bottom:1px solid var(--line);"><td style="padding:6px 8px;"><code>Normal | U$S</code></td><td style="padding:6px 8px;">U$S / USD</td></tr>
+                <tr style="border-bottom:1px solid var(--line);"><td style="padding:6px 8px;"><code>Normal | €</code></td><td style="padding:6px 8px;">Euro</td></tr>
+                <tr><td style="padding:6px 8px;"><code>Minibóveda</code></td><td style="padding:6px 8px;">Minibóveda</td></tr>
+              </tbody>
+            </table>
+            <pre style="margin:0; padding:12px; border-radius:10px; background:var(--log-bg); color:var(--log-fg); font-size:12px; overflow:auto; white-space:pre-wrap;">Otros Ingresos en U$S.
+Seleccionar caja Normal | U$S.
+Cargar importe 100.
+Procesar el ingreso.
+Resultado: el ingreso queda procesado.</pre>
+          </div>
+        </details>
+        <div class="param-form" style="margin-top:16px;">
+          <div>
+            <label for="pilotoTitulo">Título sugerido (opcional)</label>
+            <input id="pilotoTitulo" type="text" placeholder="Ej. Smoke cierre — pases pendientes" />
+          </div>
+          <div>
+            <label for="pilotoJiraUrl">Link Jira (opcional)</label>
+            <input id="pilotoJiraUrl" type="url" placeholder="https://….atlassian.net/browse/SC-161" />
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label for="pilotoJiraEmail">Email Jira</label>
+              <input id="pilotoJiraEmail" type="email" autocomplete="username" placeholder="usuario@empresa.com" />
+            </div>
+            <div>
+              <label for="pilotoJiraToken">API token Jira</label>
+              <input id="pilotoJiraToken" type="password" autocomplete="off" placeholder="No se guarda en el servidor" />
+            </div>
+          </div>
+          <label class="checks" style="display:flex; gap:8px; align-items:center; font-size:13px;">
+            <input type="checkbox" id="pilotoRememberJira" />
+            Recordar email/token solo en este navegador
+          </label>
+          <div>
+            <label for="pilotoFiles">Documentación (opcional)</label>
+            <input id="pilotoFiles" type="file" multiple accept=".txt,.md,.csv,.feature,.json,.docx,.log" />
+          </div>
+          <div>
+            <label for="pilotoTexto">Escribí el caso en claro (recomendado)</label>
+            <textarea id="pilotoTexto" rows="6" spellcheck="true" placeholder="En general:
+Qué se prueba + pasos + datos fijos + resultado esperado.
+
+Ejemplo (Otros Ingresos, ya soportado):
+Otros Ingresos en U$S.
+Caja Normal | U$S.
+Importe 100.
+Resultado: queda procesado."></textarea>
+            <p style="margin:6px 0 0; font-size:12px; color:var(--muted);">Si indicás un número fijo (ej. <strong>importe 100</strong>), el caso debe usarlo — no uno aleatorio.</p>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px;">
+            <div>
+              <label for="pilotoMoneda">Moneda de caja (opcional)</label>
+              <select id="pilotoMoneda" style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--text); font:inherit;">
+                <option value="">— Según el texto —</option>
+                <option value="Pesos">Normal | $ (Pesos)</option>
+                <option value="U$S">Normal | U$S</option>
+                <option value="Euro">Normal | €</option>
+              </select>
+            </div>
+            <div>
+              <label for="pilotoImporte">Importe fijo (opcional)</label>
+              <input id="pilotoImporte" type="number" min="0.01" step="0.01" placeholder="Ej. 100" />
+              <p style="margin:6px 0 0; font-size:12px; color:var(--muted);">Vacío = aleatorio. Con valor = exactamente ese importe.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions" style="margin-top:14px;">
+          <button type="button" id="btnPilotoAnalizar" class="primary">Analizar y proponer feature</button>
+          <button type="button" id="btnPilotoLimpiar">Limpiar</button>
+        </div>
+        <div id="pilotoStatus" class="status-bar info" role="status" aria-live="polite"></div>
+
+        <div id="pilotoResultado" style="display:none; margin-top:18px;">
+          <div class="info-grid" style="margin-bottom:12px;">
+            <div class="info"><small>Veredicto</small><strong id="pilotoVeredicto">—</strong></div>
+            <div class="info"><small>¿Puede generar?</small><strong id="pilotoPuede">—</strong></div>
+          </div>
+          <p id="pilotoResumen" style="margin:0 0 12px; line-height:1.5;"></p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <h4 style="margin:0 0 6px; color:var(--navy);">Falta información</h4>
+              <ul id="pilotoFaltantes" style="margin:0; padding-left:1.2em; font-size:13px;"></ul>
+            </div>
+            <div>
+              <h4 style="margin:0 0 6px; color:var(--navy);">Riesgos / avisos</h4>
+              <ul id="pilotoRiesgos" style="margin:0; padding-left:1.2em; font-size:13px;"></ul>
+            </div>
+          </div>
+          <h4 style="margin:0 0 6px; color:var(--navy);">Steps existentes reutilizables</h4>
+          <ul id="pilotoSteps" style="margin:0 0 12px; padding-left:1.2em; font-size:13px;"></ul>
+          <label for="pilotoFeature">Borrador .feature (editable)</label>
+          <textarea id="pilotoFeature" rows="16" spellcheck="false" style="width:100%; font-family:Consolas, monospace; font-size:12px; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--log-bg); color:var(--log-fg); tab-size:2;"></textarea>
+
+          <div class="param-form" style="margin-top:14px; padding:14px; border:1px solid var(--line); border-radius:12px; background:var(--panel-soft);">
+            <h4 style="margin:0 0 10px; color:var(--navy);">Guardar en grupo de testing</h4>
+            <div>
+              <label for="pilotoTituloCaso">Título del caso (editable)</label>
+              <input id="pilotoTituloCaso" type="text" placeholder="Ej. Otros Ingresos — caja Normal pesos" />
+              <p style="margin:6px 0 0; font-size:12px; color:var(--muted);">Se usa como título del Feature en el Runner.</p>
+            </div>
+            <div style="margin-top:12px;">
+              <label for="pilotoResumenCaso">Detalle / resumen de lo que hace (editable)</label>
+              <textarea id="pilotoResumenCaso" rows="3" spellcheck="true" placeholder="Ej. Otros Ingresos: selecciona Normal | U$S, carga causa e importe y procesa el ingreso." style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--text); font:inherit; resize:vertical;"></textarea>
+              <p style="margin:6px 0 0; font-size:12px; color:var(--muted);">Se muestra en el detalle del Runner, igual que los testing de regresión.</p>
+            </div>
+            <div style="margin-top:12px;">
+              <span style="display:block; font-size:13px; font-weight:600; margin-bottom:8px; color:var(--navy);">Grupo</span>
+              <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:10px; font-size:13px;">
+                <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+                  <input type="radio" name="pilotoGrupoModo" id="pilotoGrupoModoExistente" value="existente" checked />
+                  Elegir grupo existente
+                </label>
+                <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+                  <input type="radio" name="pilotoGrupoModo" id="pilotoGrupoModoNuevo" value="nuevo" />
+                  Crear grupo nuevo
+                </label>
+              </div>
+              <div id="pilotoGrupoExistenteBox">
+                <label for="pilotoGrupoSelect">Grupo existente</label>
+                <select id="pilotoGrupoSelect" style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--text); font:inherit;">
+                  <option value="grp-sin-clasificar">Testing (sin clasificar)</option>
+                </select>
+              </div>
+              <div id="pilotoGrupoNuevoBox" style="display:none; margin-top:10px;">
+                <label for="pilotoGrupoNuevo">Nombre del grupo nuevo</label>
+                <input id="pilotoGrupoNuevo" type="text" placeholder="Ej. Testing Otros Ingresos / Sprint 42" />
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end; margin-top:12px;">
+              <div>
+                <label for="pilotoNombreArchivo">Nombre del archivo</label>
+                <input id="pilotoNombreArchivo" type="text" placeholder="Piloto_SC-161.feature" />
+              </div>
+              <label class="checks" style="display:flex; gap:8px; align-items:center; font-size:13px; padding-bottom:8px;">
+                <input type="checkbox" id="pilotoForzarIncompleto" />
+                Guardar igual si está incompleto
+              </label>
+            </div>
+          </div>
+
+          <div class="actions" style="margin-top:12px;">
+            <button type="button" id="btnPilotoGuardar" class="primary">Guardar en grupo de testing</button>
+            <button type="button" id="btnPilotoCopiar">Copiar feature</button>
+          </div>
+        </div>
+
+        <details class="fold" style="margin-top:18px;" open>
+          <summary>Casos y grupos de testing</summary>
+          <div class="fold-body">
+            <div id="pilotoListaBorradores" class="checks" style="color:var(--muted);">—</div>
+            <button type="button" id="btnPilotoRefrescarLista" style="margin-top:8px;">Actualizar lista</button>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- VISTA: AYUDA -->
+    <section id="view-ayuda" class="view">
+      <div class="panel">
+        <h2 style="margin-top:0; color:var(--navy);">Ayuda del runner</h2>
+        <div class="help-quick">
+          <div class="help-card">
+            <h4>1. Iniciar el servidor</h4>
+            <p>Doble clic en <code>RunnerOperador\Iniciar-Runner.bat</code>. No cierres la ventana negra mientras usás el runner.</p>
+          </div>
+          <div class="help-card">
+            <h4>2. Elegir y ejecutar</h4>
+            <p>En Runner: elegí el grupo de escenarios, después el caso, revisá prerequisitos y tocá Ejecutar.</p>
+          </div>
+          <div class="help-card">
+            <h4>3. Ver el resultado</h4>
+            <p>El panel de log muestra la salida en vivo. Al terminar verás OK o FALLÓ.</p>
+          </div>
+          <div class="help-card">
+            <h4>4. Configurar</h4>
+            <p>En Configuración editás sucursal, usuario y cajas. Las contraseñas van en el archivo de secretos.</p>
+          </div>
+        </div>
+
+        <div class="help-links">
+          <a href="MANUAL.md" target="_blank" rel="noopener">Abrir MANUAL.md (texto)</a>
+        </div>
+
+        <div id="manualStatus" class="status-bar info visible">Cargando manual…</div>
+        <div id="manualRender" class="manual-render"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="sotDialog" class="sot-dialog-backdrop" role="presentation" aria-hidden="true">
+    <div class="sot-dialog" role="dialog" aria-modal="true" aria-labelledby="sotDialogTitle">
+      <div class="sot-dialog-head">
+        <div>
+          <span class="sot-dialog-eyebrow" id="sotDialogEyebrow">Runner SOT</span>
+          <h3 id="sotDialogTitle">Confirmar</h3>
+        </div>
+        <button type="button" class="sot-dialog-close" id="sotDialogClose" aria-label="Cerrar">×</button>
+      </div>
+      <div class="sot-dialog-body" id="sotDialogBody"></div>
+      <div class="sot-dialog-foot" id="sotDialogFoot"></div>
+    </div>
+  </div>
+
+  <div id="pilotoToast" class="piloto-toast" role="status" aria-live="polite" aria-hidden="true">
+    <div>
+      <strong id="pilotoToastTitle">Se creó correctamente</strong>
+      <span id="pilotoToastSub">Ya está en el Runner · grupo de testing</span>
+    </div>
+    <button type="button" id="pilotoToastVer">Ver en Runner</button>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:5050";
+    const abiertoComoArchivo = window.location.protocol === "file:";
+    if (abiertoComoArchivo) {
+      document.getElementById("fileWarning").className = "file-warning visible";
+    }
+
+    const SUCURSAL = "131 - San Martin";
+    const USUARIO = "hugo.alegre";
+
+    const CATEGORIAS = [
+      {
+        id: "regresion",
+        nombre: "Regresión Alta + Intercaja",
+        sub: "Todo junto en Pesos: 01 → 02 → 05 → 03 → 04 (sin Caja-Bóveda)",
+        escenarios: ["00"]
+      },
+      {
+        id: "alta-caja",
+        nombre: "Alta de caja",
+        sub: "Pesos, Dolares y Euro — mismo flujo; solo cambia el toggle de moneda (+ supervisión sot1)",
+        escenarios: ["01", "02", "02-USD", "02-EUR"]
+      },
+      {
+        id: "intercaja",
+        nombre: "Intercaja",
+        sub: "Pesos, USD y EUR — detección automática de cajas Normal abiertas en la moneda",
+        escenarios: ["05", "03", "04", "03-USD", "04-USD", "03-EUR", "04-EUR"]
+      },
+      {
+        id: "caja-boveda",
+        nombre: "Pases Caja-Bóveda (opcional)",
+        sub: "Solo con caja bóveda asignada — fuera de la regresión estándar",
+        escenarios: ["06", "06-USD"]
+      },
+      {
+        id: "cheques",
+        nombre: "Depósito e Interdepósito de cheques",
+        sub: "Módulo COBIS: felices, judiciales, negativos y USD",
+        escenarios: ["08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18-USD", "19-USD"]
+      },
+      {
+        id: "parametria-sc161",
+        nombre: "Parametría Relación Transacción y Perfil Contable",
+        sub: "SC-161 — 20 casos Excel + suite completa",
+        escenarios: [
+          "18",
+          "18-CA01", "18-CA02", "18-CA03", "18-CA04", "18-CA05", "18-CA06", "18-CA07",
+          "18-CA08", "18-CA09", "18-CA10", "18-CA11", "18-CA12", "18-CA13", "18-CA14",
+          "18-CN01", "18-CN02", "18-CN03", "18-CN04", "18-CN05", "18-CN06"
+        ]
+      },
+      {
+        id: "cierre-cuadre-131",
+        nombre: "Cierre y cuadre · 131",
+        sub: "Solo San Martín — no toca límites de TODAS LAS SUCURSALES",
+        escenarios: ["30", "31"]
+      },
+      {
+        id: "asistente-qa-piloto",
+        nombre: "Testing (sin clasificar)",
+        sub: "Casos del asistente aún sin grupo de testing",
+        escenarios: [],
+        testing: true
+      }
+    ];
+
+    const SC161_CASOS = [
+      { id: "18", num: "18", tipo: "smoke", codigo: "Todos", titulo: "Parametría Relación Transacción y Perfil Contable (Todos)", corto: "Suite SC-161 completa (20 casos).", tag: "@RelacionTransaccionPerfilContable", solo: "", resultado: "Suite ejecutada" },
+      { id: "18-CA01", num: "CA-01", tipo: "feliz", codigo: "CA-01", titulo: "Acceso a pantalla", corto: "Menú Parametría > Relación Transacción–Perfil.", tag: "@SC161_CA01", solo: "CA-01", resultado: "Bandeja visible" },
+      { id: "18-CA02", num: "CA-02", tipo: "feliz", codigo: "CA-02", titulo: "Listado y filtro smart search", corto: "Filtro por TRN/perfil.", tag: "@SC161_CA02", solo: "CA-02", resultado: "Filtro OK" },
+      { id: "18-CA03", num: "CA-03", tipo: "feliz", codigo: "CA-03", titulo: "Autocomplete descripción TRN", corto: "TRN 32 vs 999999.", tag: "@SC161_CA03", solo: "CA-03", resultado: "Validación TRN" },
+      { id: "18-CA04", num: "CA-04", tipo: "feliz", codigo: "CA-04", titulo: "Autocomplete descripción causa", corto: "Causa 1 vs 999.", tag: "@SC161_CA04", solo: "CA-04", resultado: "Validación causa" },
+      { id: "18-CA05", num: "CA-05", tipo: "feliz", codigo: "CA-05", titulo: "Alta causa vacía (Causa=0)", corto: "TRN 444 + No Contabiliza cheques.", tag: "@SC161_CA05", solo: "CA-05", resultado: "Alta en listado" },
+      { id: "18-CA06", num: "CA-06", tipo: "feliz", codigo: "CA-06", titulo: "Alta con causa informada", corto: "TRN 32 Causa 6.", tag: "@SC161_CA06", solo: "CA-06", resultado: "Alta con causa" },
+      { id: "18-CA07", num: "CA-07", tipo: "feliz", codigo: "CA-07", titulo: "Validación perfil existente", corto: "Blur perfil OIRECACHE.", tag: "@SC161_CA07", solo: "CA-07", resultado: "Perfil informado" },
+      { id: "18-CA08", num: "CA-08", tipo: "feliz", codigo: "CA-08", titulo: "Ayuda perfil (lupa)", corto: "Lookup — pendiente si stub UI.", tag: "@SC161_CA08", solo: "CA-08", resultado: "Lupa / pendiente" },
+      { id: "18-CA09", num: "CA-09", tipo: "feliz", codigo: "CA-09", titulo: "Checkbox No Contabiliza", corto: "Deshabilita/habilita perfil.", tag: "@SC161_CA09", solo: "CA-09", resultado: "UI OK" },
+      { id: "18-CA10", num: "CA-10", tipo: "feliz", codigo: "CA-10", titulo: "Edición de perfil", corto: "Detalle + cambio perfil Efectivo.", tag: "@SC161_CA10", solo: "CA-10", resultado: "Edición OK" },
+      { id: "18-CA11", num: "CA-11", tipo: "feliz", codigo: "CA-11", titulo: "Eliminación confirmada", corto: "Pendiente: UI sin Eliminar.", tag: "@SC161_CA11", solo: "CA-11", resultado: "Pendiente UI" },
+      { id: "18-CA12", num: "CA-12", tipo: "feliz", codigo: "CA-12", titulo: "Auditoría alta", corto: "Pendiente tira auditora.", tag: "@SC161_CA12", solo: "CA-12", resultado: "Pendiente" },
+      { id: "18-CA13", num: "CA-13", tipo: "feliz", codigo: "CA-13", titulo: "Auditoría modificación", corto: "Pendiente tira auditora.", tag: "@SC161_CA13", solo: "CA-13", resultado: "Pendiente" },
+      { id: "18-CA14", num: "CA-14", tipo: "feliz", codigo: "CA-14", titulo: "E2E Branch TRN causa 0", corto: "Flujo completo tipo Branch.", tag: "@SC161_CA14", solo: "CA-14", resultado: "E2E OK" },
+      { id: "18-CN01", num: "CN-01", tipo: "negativo", codigo: "CN-01", titulo: "TRN vacía o inexistente", corto: "Rechazo al guardar.", tag: "@SC161_CN01", solo: "CN-01", resultado: "Rechazo" },
+      { id: "18-CN02", num: "CN-02", tipo: "negativo", codigo: "CN-02", titulo: "Perfil obligatorio", corto: "Sin perfil y sin No Contabiliza.", tag: "@SC161_CN02", solo: "CN-02", resultado: "Rechazo" },
+      { id: "18-CN03", num: "CN-03", tipo: "negativo", codigo: "CN-03", titulo: "Perfil inexistente", corto: "XXXXX_INVALIDO.", tag: "@SC161_CN03", solo: "CN-03", resultado: "Limpia/rechazo" },
+      { id: "18-CN04", num: "CN-04", tipo: "negativo", codigo: "CN-04", titulo: "Alta duplicada", corto: "Misma TRN+Causa.", tag: "@SC161_CN04", solo: "CN-04", resultado: "Error duplicado" },
+      { id: "18-CN05", num: "CN-05", tipo: "negativo", codigo: "CN-05", titulo: "Cancelar eliminación", corto: "Pendiente: UI sin Eliminar.", tag: "@SC161_CN05", solo: "CN-05", resultado: "Pendiente UI" },
+      { id: "18-CN06", num: "CN-06", tipo: "negativo", codigo: "CN-06", titulo: "Acceso sin permiso", corto: "Pendiente usuario cajero.", tag: "@SC161_CN06", solo: "CN-06", resultado: "Pendiente config" }
+    ];
+
+    const ESCENARIOS = {
+      "00": {
+        num: "00", tipo: "smoke",
+        titulo: "Regresión Alta + Intercaja",
+        corto: "Todo junto: Alta + Intercaja en Pesos, USD y EUR.",
+        descripcion: "Ejecuta la regresión operativa completa: escenarios 01–05 en Pesos, Alta con apertura en USD y EUR, y limpieza, pase aceptado y pase anulado de Intercaja en USD y EUR. Cada bloque aplica el overlay de su moneda. No incluye Pases Caja-Bóveda.",
+        tag: "@AltaSinEquivalencia + @AltaConEquivalencia (Pesos/USD/EUR) + @LimpiezaPasesIntercaja + @OtrosIngresos (Pesos/USD/EUR) + @AnulacionPaseIntercaja (Pesos/USD/EUR)",
+        resultado: "Regresión de las tres monedas ejecutada",
+        script: "run-TodosLosFeatures.ps1", extraArgs: "",
+        prerequisitos: [
+          "Usuario con permisos de parametria, asignación, apertura e intercaja",
+          "Sucursal configurada (131 San Martin por defecto)",
+          "Al menos dos cajas Normal abiertas para Intercaja en cada moneda: Pesos, USD y EUR",
+          "Tiempo estimado: varios minutos (suite completa)"
+        ],
+        evidencias: [
+          "Informes HTML de cada bloque de moneda",
+          "Alta 01: mensaje COE; Alta 02: cajas abiertas en Pesos, USD y EUR",
+          "Intercaja aceptado y anulado en Pesos, USD y EUR (con limpieza previa)"
+        ]
+      },
+      "01": {
+        num: "01", tipo: "feliz",
+        titulo: "Alta sin COE",
+        corto: "Validar aviso de equivalencia pendiente.",
+        descripcion: "Crea una caja, la asigna al usuario y valida en Apertura el mensaje de falta de equivalencia COE.",
+        tag: "@AltaSinEquivalencia",
+        resultado: "Mensaje COE visible",
+        script: "run-AltaSinEquivalencia.ps1", extraArgs: "",
+        prerequisitos: [
+          "Usuario con permisos de parametria y asignacion de cajas",
+          "Correlativo de caja disponible segun configuracion",
+          "Sucursal configurada en appsettings"
+        ],
+        evidencias: [
+          "Alta de caja registrada correctamente",
+          "Asignacion visible en grilla de cajas",
+          "Mensaje: Relacion caja SOT / Unidad COE no se dio de alta en SOT"
+        ]
+      },
+      "02": {
+        num: "02", tipo: "feliz",
+        titulo: "Alta con apertura",
+        corto: "Alta COE y apertura en pesos.",
+        descripcion: "Mismo flujo del escenario 01, mas alta de equivalencia COE y apertura operativa en pesos.",
+        tag: "@AltaConEquivalencia",
+        resultado: "Caja abierta en pesos",
+        script: "run-AltaCajaConEquivalencia.ps1", extraArgs: "",
+        prerequisitos: [
+          "Usuario con acceso a Parametria y Alta equivalencia COE",
+          "Correlativo de caja disponible",
+          "Fecha de bandeja alineada con fecha de proceso"
+        ],
+        evidencias: [
+          "Equivalencia COE cargada sin errores",
+          "Mensaje COE ya no aparece en Apertura",
+          "Caja queda abierta solo en moneda pesos"
+        ]
+      },
+      "02-USD": {
+        num: "02-USD", tipo: "feliz",
+        titulo: "Alta con apertura (USD)",
+        corto: "Misma alta; toggle Dolares + sot1.",
+        descripcion: "Mismo flujo del escenario 02. Solo cambia el toggle de la fila Dolares. Si pide supervisión, usa sot1.",
+        tag: "@AltaConEquivalenciaUsd",
+        resultado: "Caja abierta en Dolares",
+        script: "run-AltaCajaConEquivalencia.ps1", extraArgs: "-Moneda Usd",
+        prerequisitos: [
+          "Mismos permisos que el escenario 02",
+          "Supervisor sot1 configurado (Caja:UsuarioSupervisorApertura)",
+          "Overlay appsettings.alta-usd.json"
+        ],
+        evidencias: [
+          "Equivalencia COE cargada",
+          "Toggle Dolares activo / estado Abierta",
+          "Supervisión sot1 completada si apareció el diálogo"
+        ]
+      },
+      "02-EUR": {
+        num: "02-EUR", tipo: "feliz",
+        titulo: "Alta con apertura (EUR)",
+        corto: "Misma alta; toggle Euro + sot1.",
+        descripcion: "Mismo flujo del escenario 02. Solo cambia el toggle de la fila Euro. Si pide supervisión, usa sot1.",
+        tag: "@AltaConEquivalenciaEur",
+        resultado: "Caja abierta en Euro",
+        script: "run-AltaCajaConEquivalencia.ps1", extraArgs: "-Moneda Eur",
+        prerequisitos: [
+          "Mismos permisos que el escenario 02",
+          "Supervisor sot1 configurado",
+          "Overlay appsettings.alta-eur.json"
+        ],
+        evidencias: [
+          "Equivalencia COE cargada",
+          "Toggle Euro activo / estado Abierta",
+          "Supervisión sot1 completada si apareció el diálogo"
+        ]
+      },
+      "03": {
+        num: "03", tipo: "feliz",
+        titulo: "Interpase aceptado",
+        corto: "Enviar y aceptar pase desde caja destino.",
+        descripcion: "Circuito completo de pase intercaja: origen, destino, billetaje, confirmacion, recepcion y aceptacion.",
+        tag: "@OtrosIngresos",
+        resultado: "Aceptado",
+        script: "run-Intercaja.ps1", extraArgs: "-Solo Aceptado",
+        prerequisitos: [
+          "Al menos dos cajas normales asignadas al usuario",
+          "Caja origen con COE y saldo suficiente",
+          "Fecha de bandeja = fecha de proceso",
+          "Sin pases basura A confirmar (correr escenario 05 si hace falta)"
+        ],
+        evidencias: [
+          "Pase visible en Enviados con estado A confirmar",
+          "Detalle con monto y numero SOT correctos",
+          "Pase final en Recibidos con estado Aceptado"
+        ]
+      },
+      "04": {
+        num: "04", tipo: "feliz",
+        titulo: "Interpase anulado",
+        corto: "Anular pase pendiente desde caja origen.",
+        descripcion: "Envia un pase intercaja y lo anula desde la caja origen antes de aceptarlo en destino. Valida Anulado en Enviados (origen) y en Recibidos (destino).",
+        tag: "@AnulacionPaseIntercaja",
+        resultado: "Anulado en ambos lados",
+        script: "run-AnulacionPaseIntercaja.ps1", extraArgs: "",
+        prerequisitos: [
+          "Caja origen operativa con saldo",
+          "Caja destino distinta disponible",
+          "No dejar pases basura previos (o correr limpieza)"
+        ],
+        evidencias: [
+          "Pase aparece en Enviados: A confirmar",
+          "Tras anular, estado Anulado en Enviados de origen",
+          "Estado Anulado también en Recibidos de destino"
+        ]
+      },
+      "05": {
+        num: "05", tipo: "smoke",
+        titulo: "Limpieza interpases",
+        corto: "Resolver pases A confirmar.",
+        descripcion: "Resuelve pases intercaja pendientes A confirmar anulando en Enviados o aceptando en Recibidos.",
+        tag: "@LimpiezaPasesIntercaja",
+        resultado: "Sin pendientes",
+        script: "run-LimpiezaPasesIntercaja.ps1", extraArgs: "",
+        prerequisitos: [
+          "Usuario con cajas operativas asignadas",
+          "Acceso a Pases Intercaja desde Acciones de Caja"
+        ],
+        evidencias: [
+          "Pases A confirmar en Enviados anulados",
+          "Pases A confirmar en Recibidos aceptados",
+          "Si no hay pendientes, finaliza sin error"
+        ]
+      },
+      "06": {
+        num: "06-07", tipo: "negativo",
+        titulo: "Pases Caja-Bóveda error COE",
+        corto: "Opcional: requiere bóveda asignada.",
+        descripcion: "NO forma parte de la regresión estándar. Ingresa a Pases Caja-Bóveda y selecciona cajas hasta que aparezca un popup de error COE (sin equivalencia u Operapendientes). Solo ejecutar si hay caja bóveda asignada al usuario.",
+        tag: "@PasesCajaBovedaNegativo",
+        resultado: "Popup COE mostrado",
+        script: "run-PasesCajaBovedaNegativo.ps1", extraArgs: "",
+        prerequisitos: [
+          "OBLIGATORIO: caja tipo Bóveda asignada al usuario en la sucursal",
+          "Usuario con acceso a Pases Caja - Bóveda desde Acciones de Caja",
+          "Fuera de regresión 01–05: no correr si no hay bóveda (confunde evidencia)"
+        ],
+        evidencias: [
+          "Aparece uno de los dos carteles de error COE",
+          "Relacion caja SOT / Unidad COE, o Consulta COE / Operapendientes",
+          "El dialogo se cierra con Entendido"
+        ]
+      },
+      "03-USD": {
+        num: "03-USD", tipo: "feliz",
+        titulo: "Interpase aceptado (USD)",
+        corto: "Enviar y aceptar pase en dólares.",
+        descripcion: "Circuito intercaja en moneda Dolares. Detecta dinámicamente desde Apertura una caja Normal de origen con USD abierto y otra con las mismas características como destino.",
+        tag: "@OtrosIngresosUsd",
+        resultado: "Aceptado",
+        script: "run-Intercaja.ps1", extraArgs: "-Solo UsdAceptado",
+        prerequisitos: [
+          "Al menos dos cajas Normal del usuario con USD abierto y COE",
+          "Una caja se usa como origen y otra como destino",
+          "Overlay appsettings.intercaja-usd.json"
+        ],
+        evidencias: [
+          "Pase en Enviados: A confirmar",
+          "Pase final en Recibidos: Aceptado",
+          "Billetaje en denominaciones USD"
+        ]
+      },
+      "04-USD": {
+        num: "04-USD", tipo: "feliz",
+        titulo: "Interpase anulado (USD)",
+        corto: "Anular pase USD desde origen.",
+        descripcion: "Envía un pase intercaja en dólares y lo anula desde la caja origen. Misma lógica que el escenario 04 en pesos.",
+        tag: "@AnulacionPaseIntercajaUsd",
+        resultado: "Anulado en ambos lados",
+        script: "run-Intercaja.ps1", extraArgs: "-Solo UsdAnulado",
+        prerequisitos: [
+          "Caja origen USD operativa con saldo",
+          "Caja destino distinta con USD",
+          "Overlay appsettings.intercaja-usd.json"
+        ],
+        evidencias: [
+          "Estado Anulado en Enviados de origen",
+          "Estado Anulado en Recibidos de destino"
+        ]
+      },
+      "03-EUR": {
+        num: "03-EUR", tipo: "feliz",
+        titulo: "Interpase aceptado (EUR)",
+        corto: "Enviar y aceptar pase en euros.",
+        descripcion: "Circuito intercaja en moneda Euro. Detecta dinámicamente origen y destino Normal con euros abiertos. Supervisión sot1 igual que Pesos/USD.",
+        tag: "@OtrosIngresosEur",
+        resultado: "Aceptado",
+        script: "run-Intercaja.ps1", extraArgs: "-Solo EurAceptado",
+        prerequisitos: [
+          "Al menos dos cajas Normal del usuario con Euro abierto y COE",
+          "Overlay appsettings.intercaja-eur.json"
+        ],
+        evidencias: [
+          "Pase en Enviados: A confirmar",
+          "Pase final en Recibidos: Aceptado",
+          "Billetaje en denominaciones EUR"
+        ]
+      },
+      "04-EUR": {
+        num: "04-EUR", tipo: "feliz",
+        titulo: "Interpase anulado (EUR)",
+        corto: "Anular pase EUR desde origen.",
+        descripcion: "Envía un pase intercaja en euros y lo anula desde la caja origen.",
+        tag: "@AnulacionPaseIntercajaEur",
+        resultado: "Anulado en ambos lados",
+        script: "run-Intercaja.ps1", extraArgs: "-Solo EurAnulado",
+        prerequisitos: [
+          "Caja origen EUR operativa con saldo",
+          "Caja destino distinta con Euro",
+          "Overlay appsettings.intercaja-eur.json"
+        ],
+        evidencias: [
+          "Estado Anulado en Enviados de origen",
+          "Estado Anulado en Recibidos de destino"
+        ]
+      },
+      "06-USD": {
+        num: "06-USD", tipo: "negativo",
+        titulo: "Pases Caja-Bóveda error COE (USD)",
+        corto: "Detecta una caja USD desde Apertura.",
+        descripcion: "Mismo popup COE negativo que el escenario 06, usando una caja Normal con USD abierto detectada dinámicamente desde Apertura.",
+        tag: "@PasesCajaBovedaNegativoUsd",
+        resultado: "Popup COE mostrado",
+        script: "run-PasesCajaBovedaNegativo.ps1", extraArgs: "-Solo Usd",
+        prerequisitos: [
+          "Caja bóveda / acceso a Pases Caja-Bóveda",
+          "Overlay appsettings.pases-caja-boveda-usd.json"
+        ],
+        evidencias: [
+          "Popup COE (sin equivalencia u Operapendientes)",
+          "Cierre con Entendido"
+        ]
+      },
+      "30": {
+        num: "30", tipo: "smoke",
+        titulo: "Smoke Parametría Cajas 131",
+        corto: "Listado, filtro y datos de fila — solo San Martín.",
+        descripcion: "Entra a Parametría > Cajas con sucursal 131, verifica que la oficina no sea TODAS LAS SUCURSALES, lista cajas, filtra por correlativo y valida código/tipo/estado de la fila. Si hay permiso de edición, abre el detalle y cancela sin guardar. No edita límites globales.",
+        tag: "@ParametriaCajasSmoke131",
+        resultado: "Listado y filtro OK en 131",
+        script: "run-ParametriaCajasSmoke.ps1", extraArgs: "",
+        prerequisitos: [
+          "Usuario con permiso de Parametría > Cajas (listado)",
+          "Sucursal 131 San Martín con al menos una caja cargada",
+          "Overlay appsettings.cierre-cuadre-131.json (fija 131)",
+          "Edición de detalle es opcional (permiso sot:cajas-editar)"
+        ],
+        evidencias: [
+          "Oficina 131 seleccionada (no TODAS LAS SUCURSALES)",
+          "Listado filtrado por correlativo con tipo y estado visibles",
+          "Formulario de detalle solo si hay botón Editar"
+        ]
+      },
+      "31": {
+        num: "31", tipo: "smoke",
+        titulo: "Smoke cierre/cuadre 131",
+        corto: "Límites 131 → Cuadre → pases/saldo → cierre.",
+        descripcion: "Opera sobre = 131. Va directo a Cuadre y cierre (sin Apertura): elige caja Pesos/USD, si hay botones rojos de pases los resuelve (intercaja anular/aceptar; bóveda solo Recibidos), si el saldo está en 0 carga Otros ingresos 100, y cierra con billetaje. Popup COBIS/SOT se acepta. Supervisión Local: sot1 / sot3 (Control de Billetaje).",
+        tag: "@CierreCuadreSmoke131",
+        resultado: "Cierre confirmado en 131",
+        script: "run-CierreCuadreSmoke.ps1", extraArgs: "",
+        prerequisitos: [
+          "Usuario con Cuadre y cierre, Otros ingresos y Parametría > Límites de caja",
+          "Sucursal 131 con al menos una caja abierta Pesos o USD",
+          "Overlay appsettings.cierre-cuadre-131.json",
+          "sot1 (default) y sot3 (Control de Billetaje) en secrets"
+        ],
+        evidencias: [
+          "Opera sobre = 131",
+          "Pases pendientes resueltos desde botones rojos de Cuadre (si había)",
+          "Saldo cargado solo si estaba en 0",
+          "Cierre confirmado"
+        ]
+      },
+      "08": {
+        num: "08", tipo: "smoke",
+        titulo: "Conexión COBIS",
+        corto: "Smoke de conexión y fecha de proceso.",
+        descripcion: "Verifica la conexión con COBIS (SYBSRV2) y la fecha de proceso. No genera transacciones monetarias.",
+        tag: "@DepositoChequesConexionCobis",
+        resultado: "Conexión COBIS OK",
+        script: "run-DepositoInterdepositoCheques.ps1", extraArgs: "-Solo ConexionCobis",
+        prerequisitos: [
+          "VPN / acceso a COBIS SYBSRV2 192.168.50.121:7410",
+          "Usuario portiz de solo lectura disponible"
+        ],
+        evidencias: [
+          "Conexión COBIS establecida",
+          "Fecha de proceso leída correctamente"
+        ]
+      },
+      "09": {
+        num: "09", tipo: "feliz",
+        titulo: "Interdepósito ahorros otra sucursal",
+        corto: "Carrito Pendiente sin ejecutar.",
+        descripcion: "Carga un interdepósito de ahorros de otra sucursal y deja el carrito en estado Pendiente, sin ejecutar la transacción.",
+        tag: "@InterdepositoAhorrosOtraSucursal",
+        resultado: "Carrito Pendiente",
+        script: "run-DepositoInterdepositoCheques.ps1", extraArgs: "-Solo Interdeposito",
+        prerequisitos: [
+          "Conexión COBIS operativa (ver escenario 08)",
+          "Cuenta de ahorros de otra sucursal válida"
+        ],
+        evidencias: [
+          "Carrito cargado en estado Pendiente",
+          "No se ejecuta transacción monetaria"
+        ]
+      },
+      "10": {
+        num: "10", tipo: "feliz",
+        titulo: "Depósito/Interdepósito completo",
+        corto: "Flujo E2E ejecutado (con TM).",
+        descripcion: "Flujo feliz completo: carga, ejecuta el carrito y valida la Transacción Monetaria en estado Ejecutada.",
+        tag: "@DepositoInterdepositoCompleto",
+        resultado: "TM Ejecutada",
+        script: "run-DepositoInterdepositoCheques.ps1", extraArgs: "-Solo Completo",
+        prerequisitos: [
+          "Conexión COBIS operativa",
+          "Cuenta válida con depósito de cheques posible"
+        ],
+        evidencias: [
+          "Carrito Ejecutada",
+          "Detalle en Transacciones Monetarias: Ejecutada",
+          "Búsqueda por número de producto (cuenta COBIS)"
+        ]
+      },
+      "11": {
+        num: "11", tipo: "feliz",
+        titulo: "Interdepósito judicial",
+        corto: "Flujo judicial completo (con TM).",
+        descripcion: "Flujo feliz E2E para cuenta judicial: completa el circuito y valida la TM en estado Ejecutada.",
+        tag: "@DepositoInterdepositoJudicial",
+        resultado: "TM Ejecutada",
+        script: "run-DepositoChequesFiltro.ps1", extraArgs: "-Categoria DepositoInterdepositoJudicial",
+        prerequisitos: [
+          "Conexión COBIS operativa",
+          "Cuenta judicial válida"
+        ],
+        evidencias: [
+          "Flujo judicial completo sin errores",
+          "Detalle en Transacciones Monetarias: Ejecutada"
+        ]
+      },
+      "12": {
+        num: "12", tipo: "feliz",
+        titulo: "Interdepósito corriente",
+        corto: "Flujo cuenta corriente (con TM).",
+        descripcion: "Flujo feliz E2E para cuenta corriente: completa el circuito y valida la TM en estado Ejecutada.",
+        tag: "@DepositoInterdepositoCorriente",
+        resultado: "TM Ejecutada",
+        script: "run-DepositoInterdepositoCheques.ps1", extraArgs: "-Solo Corriente",
+        prerequisitos: [
+          "Conexión COBIS operativa",
+          "Cuenta corriente válida"
+        ],
+        evidencias: [
+          "Flujo corriente completo sin errores",
+          "Detalle en Transacciones Monetarias: Ejecutada"
+        ]
+      },
+      "13": {
+        num: "13", tipo: "negativo",
+        titulo: "Cuenta bloqueada",
+        corto: "Error al Buscar (cuenta bloqueada).",
+        descripcion: "Caso negativo: al buscar una cuenta bloqueada, el sistema debe mostrar error y no permitir avanzar.",
+        tag: "@DepositoInterdepositoBloqueado",
+        resultado: "Error de cuenta bloqueada",
+        script: "run-DepositoChequesFiltro.ps1", extraArgs: "-Categoria DepositoInterdepositoBloqueado",
+        prerequisitos: [
+          "Conexión COBIS operativa",
+          "Cuenta bloqueada conocida para la prueba"
+        ],
+        evidencias: [
+          "Error al Buscar la cuenta bloqueada",
+          "No se genera transacción monetaria"
+        ]
+      },
+      "14": {
+        num: "14", tipo: "negativo",
+        titulo: "Sin depósito de cheques",
+        corto: "COP/CANT en cero.",
+        descripcion: "Caso negativo: importe (COP) y cantidad (CANT) en cero, no se puede continuar el depósito.",
+        tag: "@DepositoInterdepositoSinDepositoCheques",
+        resultado: "No continúa (COP/CANT cero)",
+        script: "run-DepositoChequesFiltro.ps1", extraArgs: "-Categoria DepositoInterdepositoSinDepositoCheques",
+        prerequisitos: [
+          "Conexión COBIS operativa",
+          "Cuenta válida sin cargar cheques"
+        ],
+        evidencias: [
+          "COP y CANT en cero",
+          "El flujo no permite finalizar"
+        ]
+      },
+      "15": {
+        num: "15", tipo: "negativo",
+        titulo: "Cancelar judicial",
+        corto: "Carrito vacío, TM no aparece.",
+        descripcion: "Caso negativo: se cancela un depósito judicial. El carrito queda vacío y en Transacciones Monetarias NO debe figurar el depósito.",
+        tag: "@DepositoInterdepositoCancelarJudicial",
+        resultado: "TM ausente (cancelado)",
+        script: "run-DepositoChequesFiltro.ps1", extraArgs: "-Categoria DepositoInterdepositoCancelarJudicial",
+        prerequisitos: [
+          "Conexión COBIS operativa",
+          "Cuenta judicial válida"
+        ],
+        evidencias: [
+          "Carrito queda vacío tras cancelar",
+          "En Transacciones Monetarias NO aparece el depósito"
+        ]
+      },
+      "16": {
+        num: "16", tipo: "negativo",
+        titulo: "Boleta inválida",
+        corto: "Boleta/DV inválido (no finaliza).",
+        descripcion: "Caso negativo: boleta o dígito verificador inválido; el depósito no debe finalizar.",
+        tag: "@DepositoInterdepositoBoletaInvalida",
+        resultado: "No finaliza (boleta inválida)",
+        script: "run-DepositoChequesFiltro.ps1", extraArgs: "-Categoria DepositoInterdepositoBoletaInvalida",
+        prerequisitos: [
+          "Conexión COBIS operativa",
+          "Cuenta válida"
+        ],
+        evidencias: [
+          "Boleta / DV inválido rechazado",
+          "El flujo no finaliza"
+        ]
+      },
+      "17": {
+        num: "17", tipo: "negativo",
+        titulo: "Boleta no numérica",
+        corto: "BOL solo dígitos.",
+        descripcion: "Caso negativo: el campo boleta (BOL) solo admite dígitos; se valida el rechazo de valores no numéricos.",
+        tag: "@DepositoInterdepositoBoletaNoNumerica",
+        resultado: "Rechaza no numérico",
+        script: "run-DepositoChequesFiltro.ps1", extraArgs: "-Categoria DepositoInterdepositoBoletaNoNumerica",
+        prerequisitos: [
+          "Conexión COBIS operativa",
+          "Cuenta válida"
+        ],
+        evidencias: [
+          "El campo BOL rechaza caracteres no numéricos",
+          "El flujo no finaliza con boleta inválida"
+        ]
+      },
+      "18-USD": {
+        num: "18", tipo: "feliz",
+        titulo: "Depósito USD misma sucursal",
+        corto: "Cuenta ahorro USD + TM Ejecutada.",
+        descripcion: "Depósito de cheques en dólares (caja 6380). Overlay appsettings.deposito-interdeposito-cheques-usd.json.",
+        tag: "@DepositoUsdMismaSucursal",
+        resultado: "TM Ejecutada",
+        script: "run-DepositoChequesFiltro.ps1", extraArgs: "-Categoria DepositoUsdMismaSucursal -Usd",
+        prerequisitos: [
+          "Caja 6380 con dólares abiertos",
+          "Cuenta ahorro USD misma sucursal en COBIS",
+          "VPN / COBIS operativo"
+        ],
+        evidencias: [
+          "Carrito Ejecutada",
+          "Detalle TM: Ejecutada"
+        ]
+      },
+      "19-USD": {
+        num: "19", tipo: "feliz",
+        titulo: "Interdepósito USD otra sucursal",
+        corto: "Cuenta ahorro USD otra sucursal + TM.",
+        descripcion: "Interdepósito de cheques en dólares (caja 6380). Overlay USD.",
+        tag: "@DepositoInterdepositoUsd",
+        resultado: "TM Ejecutada",
+        script: "run-DepositoChequesFiltro.ps1", extraArgs: "-Categoria DepositoInterdepositoUsd -Usd",
+        prerequisitos: [
+          "Caja 6380 con dólares abiertos",
+          "Cuenta ahorro USD de otra sucursal en COBIS",
+          "VPN / COBIS operativo"
+        ],
+        evidencias: [
+          "Carrito Ejecutada",
+          "Detalle TM: Ejecutada"
+        ]
+      }
+    };
+
+    // Incorpora los 20 casos SC-161 + suite "Todos" al catálogo ejecutable.
+    SC161_CASOS.forEach(function (c) {
+      ESCENARIOS[c.id] = {
+        num: c.num,
+        tipo: c.tipo,
+        titulo: c.titulo,
+        corto: c.corto,
+        descripcion: "SC-161 · " + c.codigo + " — Parametría Relación Transacción y Perfil Contable. Jira: https://bancomacro.atlassian.net/browse/SC-161",
+        tag: c.tag,
+        resultado: c.resultado,
+        script: "run-SC161-RelacionTransaccionPerfil.ps1",
+        extraArgs: c.solo ? ("-Solo " + c.solo) : "",
+        jira: "https://bancomacro.atlassian.net/browse/SC-161",
+        prerequisitos: [
+          "Usuario con permiso sot:page_relacion-transaccion-perfil (salvo CN-06)",
+          "Datos RelacionTransaccionPerfil en appsettings",
+          "Excel: casos-prueba/SC-161 Evidencia.xlsx"
+        ],
+        evidencias: [
+          "Evidencia Playwright del caso " + c.codigo,
+          "Informe HTML Extent de la corrida"
+        ]
+      };
+    });
+
+    const TIPO_LABEL = { feliz: "Feliz", negativo: "Negativo", smoke: "Smoke" };
+
+    let categoriaActual = CATEGORIAS[0].id;
+    let escenarioActual = CATEGORIAS[0].escenarios[0];
+    let servidorOnline = false;
+    let corridaEnCurso = false;
+    let pollTimer = null;
+
+    function comandoPowerShell(esc) {
+      const extras = esc.extraArgs ? " " + esc.extraArgs : "";
+      return "powershell -ExecutionPolicy Bypass -File .\\" + esc.script + extras;
+    }
+
+    function categoriaDe(id) {
+      return CATEGORIAS.find(function (c) { return c.escenarios.indexOf(id) !== -1; });
+    }
+
+    function cerrarRunnerSelect() {
+      const root = document.getElementById("runnerSelect");
+      const trigger = document.getElementById("runnerSelectTrigger");
+      root.classList.remove("open");
+      trigger.setAttribute("aria-expanded", "false");
+    }
+
+    function toggleRunnerSelect() {
+      const root = document.getElementById("runnerSelect");
+      const trigger = document.getElementById("runnerSelectTrigger");
+      const open = !root.classList.contains("open");
+      root.classList.toggle("open", open);
+      trigger.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    function renderCategorias() {
+      const catActiva = CATEGORIAS.find(function (c) { return c.id === categoriaActual; }) || CATEGORIAS[0];
+      const label = document.getElementById("runnerSelectLabel");
+      const sub = document.getElementById("runnerSelectSub");
+      const menu = document.getElementById("runnerSelectMenu");
+      const hint = document.getElementById("catHint");
+
+      label.textContent = catActiva.nombre;
+      sub.textContent = catActiva.escenarios.length +
+        (catActiva.escenarios.length === 1 ? " escenario" : " escenarios");
+
+      if (catActiva.sub) {
+        hint.textContent = catActiva.sub;
+        hint.className = "cat-hint visible";
+      } else {
+        hint.textContent = "";
+        hint.className = "cat-hint";
+      }
+
+      menu.innerHTML = CATEGORIAS.map(function (cat) {
+        const activa = cat.id === categoriaActual ? " active" : "";
+        const n = cat.escenarios.length;
+        return '<button type="button" class="runner-select-option' + activa + '" role="option" data-cat="' + cat.id + '"' +
+          (activa ? ' aria-selected="true"' : ' aria-selected="false"') + '>' +
+          '<span class="opt-name">' + escaparAttr(cat.nombre) + '</span>' +
+          '<span class="opt-meta">' +
+          '<span>' + escaparAttr(cat.sub) + '</span>' +
+          '<span class="opt-count">' + n + '</span>' +
+          '</span>' +
+          '</button>';
+      }).join("");
+
+        menu.querySelectorAll(".runner-select-option").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          categoriaActual = btn.getAttribute("data-cat");
+          const cat = CATEGORIAS.find(function (c) { return c.id === categoriaActual; });
+          escenarioActual = (cat.escenarios && cat.escenarios.length) ? cat.escenarios[0] : escenarioActual;
+          cerrarRunnerSelect();
+          renderCategorias();
+          renderLista();
+          if (ESCENARIOS[escenarioActual]) mostrarEscenario(ESCENARIOS[escenarioActual]);
+        });
+      });
+    }
+
+    function escaparAttr(s) {
+      return String(s || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;");
+    }
+
+    document.getElementById("runnerSelectTrigger").addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      toggleRunnerSelect();
+    });
+
+    document.addEventListener("click", function (ev) {
+      const root = document.getElementById("runnerSelect");
+      if (!root.classList.contains("open")) return;
+      if (root.contains(ev.target)) return;
+      cerrarRunnerSelect();
+    });
+
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Escape") return;
+      if (document.getElementById("runnerSelect").classList.contains("open")) {
+        cerrarRunnerSelect();
+      }
+    });
+
+    function renderLista() {
+      const cat = CATEGORIAS.find(function (c) { return c.id === categoriaActual; });
+      const ids = (cat && cat.escenarios) ? cat.escenarios : [];
+      document.getElementById("listTitle").textContent =
+        ids.length + (ids.length === 1 ? " caso" : " casos");
+
+      const cont = document.getElementById("lista");
+      if (!ids.length) {
+        cont.innerHTML = '<div class="cat-hint visible" style="margin:8px 0;">Sin casos en este grupo. Generá uno en <strong>Generar con asistente</strong>.</div>';
+        return;
+      }
+
+      cont.innerHTML = ids.map(function (id) {
+        const esc = ESCENARIOS[id];
+        if (!esc) return "";
+        const sel = id === escenarioActual ? " selected" : "";
+        return '<div class="scenario' + sel + '" data-id="' + id + '">' +
+          '<div class="scenario-top">' +
+          '<small>Escenario ' + esc.num + '</small>' +
+          '</div>' +
+          '<strong>' + esc.titulo + '</strong>' +
+          '<span>' + esc.corto + '</span>' +
+          '</div>';
+      }).join("");
+
+      cont.querySelectorAll(".scenario").forEach(function (item) {
+        item.addEventListener("click", function () {
+          escenarioActual = item.getAttribute("data-id");
+          renderLista();
+          mostrarEscenario(ESCENARIOS[escenarioActual]);
+        });
+      });
+    }
+
+    function setServerState(mode, text) {
+      const pill = document.getElementById("serverPill");
+      pill.className = "server-pill " + mode;
+      document.getElementById("serverText").textContent = text;
+      pill.style.display = mode === "online" ? "none" : "inline-flex";
+    }
+
+    async function verificarServidor() {
+      try {
+        const res = await fetch(API_BASE + "/health", { cache: "no-store" });
+        if (!res.ok) throw new Error("health");
+        const wasOffline = !servidorOnline;
+        servidorOnline = true;
+        setServerState(corridaEnCurso ? "busy" : "online", corridaEnCurso
+          ? "Servidor: corrida en curso"
+          : "Servidor: conectado (localhost:5050)");
+        if (wasOffline) pilotoCargarEnRunner(null);
+      } catch (_) {
+        servidorOnline = false;
+        setServerState("offline", "Servidor: sin conexión — doble clic en Iniciar-Runner.bat");
+      }
+    }
+
+    function setEjecutando(enCurso) {
+      corridaEnCurso = enCurso;
+      document.getElementById("btnEjecutar").disabled = enCurso;
+      if (enCurso) {
+        setServerState("busy", "Servidor: corrida en curso");
+      } else {
+        verificarServidor();
+      }
+    }
+
+    let ultimaCorridaMeta = null;
+
+    function setRunProgress(fase, tituloEscenario, subtitulo) {
+      const box = document.getElementById("runProgress");
+      const spin = document.getElementById("runProgressSpin");
+      const glyph = document.getElementById("runProgressGlyph");
+      const actions = document.getElementById("runProgressActions");
+      const fold = document.getElementById("runLogFold");
+
+      if (!fase || fase === "idle") {
+        box.className = "run-progress";
+        box.setAttribute("aria-hidden", "true");
+        actions.className = "run-progress-actions";
+        fold.className = "run-log-fold";
+        fold.open = false;
+        return;
+      }
+
+      const fases = {
+        loading: {
+          phase: "Cargando ejecución",
+          title: tituloEscenario || "Preparando corrida…",
+          sub: subtitulo || "Iniciando Playwright y el script del escenario.",
+          glyph: "",
+          spinning: true
+        },
+        running: {
+          phase: "En ejecución",
+          title: tituloEscenario || "Corrida en curso…",
+          sub: subtitulo || "La prueba está corriendo. Podés seguir el avance cuando termine.",
+          glyph: "",
+          spinning: true
+        },
+        ok: {
+          phase: "Finalizó",
+          title: "OK",
+          sub: subtitulo || "La corrida terminó correctamente. Revisá el informe si querés el detalle.",
+          glyph: "✓",
+          spinning: false
+        },
+        fail: {
+          phase: "Finalizó",
+          title: "Salió con fallas",
+          sub: subtitulo || "Revisá el informe para ver el paso a paso y las capturas.",
+          glyph: "!",
+          spinning: false
+        }
+      };
+
+      const cfg = fases[fase] || fases.running;
+      box.className = "run-progress visible " + fase;
+      box.setAttribute("aria-hidden", "false");
+      document.getElementById("runProgressPhase").textContent = cfg.phase;
+      document.getElementById("runProgressTitle").textContent = cfg.title;
+      document.getElementById("runProgressSub").textContent = cfg.sub;
+
+      spin.style.display = cfg.spinning ? "block" : "none";
+      glyph.style.display = cfg.spinning ? "none" : "inline";
+      glyph.textContent = cfg.glyph;
+
+      const mostrarAcciones = fase === "ok" || fase === "fail";
+      actions.className = "run-progress-actions" + (mostrarAcciones ? " visible" : "");
+      fold.className = "run-log-fold" + (mostrarAcciones ? " visible" : "");
+      if (!mostrarAcciones) fold.open = false;
+    }
+
+    function abrirDetalleTecnico(forzarAbrir) {
+      const fold = document.getElementById("runLogFold");
+      const panel = document.getElementById("logPanel");
+      if (!fold) return;
+      fold.className = "run-log-fold visible";
+      if (panel && panel.textContent) panel.className = "log-panel visible";
+      if (forzarAbrir) fold.open = true;
+      fold.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function mostrarLog(texto) {
+      const panel = document.getElementById("logPanel");
+      const fold = document.getElementById("runLogFold");
+      if (!texto) {
+        panel.className = "log-panel";
+        panel.textContent = "";
+        return;
+      }
+      panel.className = "log-panel visible";
+      panel.textContent = texto;
+      if (fold) fold.className = "run-log-fold visible";
+      panel.scrollTop = panel.scrollHeight;
+    }
+
+    function mostrarEscenario(esc) {
+      document.getElementById("titulo").textContent = "Escenario " + esc.num + " · " + esc.titulo;
+      document.getElementById("descripcion").textContent = esc.descripcion;
+      document.getElementById("tag").textContent = esc.tag;
+      document.getElementById("sucursal").textContent = SUCURSAL;
+      document.getElementById("usuario").textContent = USUARIO;
+      document.getElementById("resultado").textContent = esc.resultado;
+
+      document.getElementById("prerequisitos").innerHTML =
+        esc.prerequisitos.map(function (t) { return '<div class="check"><span>' + escaparHtml(t) + "</span></div>"; }).join("");
+
+      document.getElementById("evidencias").innerHTML =
+        esc.evidencias.map(function (t) { return '<div class="check"><span>' + escaparHtml(t) + "</span></div>"; }).join("");
+
+      const btnDel = document.getElementById("btnEliminarPiloto");
+      if (btnDel) btnDel.style.display = esc.piloto ? "inline-flex" : "none";
+
+      ocultarStatus();
+      setRunProgress("idle");
+      mostrarLog("");
+      ocultarEvidenciaActions();
+    }
+
+    function mostrarStatus(mensaje, tipo) {
+      // Avisos cortos (validar, copiar, errores de red). La corrida usa setRunProgress.
+      const bar = document.getElementById("statusBar");
+      bar.textContent = mensaje;
+      bar.className = "status-bar visible " + (tipo || "info");
+    }
+
+    function setEvidenciaLinksEnabled(enabled, zipUrl, informeUrl) {
+      const zip = document.getElementById("btnDescargarZip");
+      const inf = document.getElementById("btnAbrirInforme");
+      zip.style.display = "inline-flex";
+      inf.style.display = "inline-flex";
+      if (enabled) {
+        zip.href = zipUrl || "#";
+        inf.href = informeUrl || "#";
+        zip.classList.remove("is-disabled");
+        inf.classList.remove("is-disabled");
+        zip.setAttribute("aria-disabled", "false");
+        inf.setAttribute("aria-disabled", "false");
+      } else {
+        zip.href = "#";
+        inf.href = "#";
+        zip.classList.add("is-disabled");
+        inf.classList.add("is-disabled");
+        zip.setAttribute("aria-disabled", "true");
+        inf.setAttribute("aria-disabled", "true");
+      }
+    }
+
+    function ocultarEvidenciaActions() {
+      const box = document.getElementById("evidenciaActions");
+      box.style.display = "block";
+      box.classList.remove("is-fail");
+      document.getElementById("evidenciaActionsTitle").textContent = "Informe y evidencias";
+      document.getElementById("evidenciaRuta").textContent =
+        "Ejecutá el escenario para generar el informe paso a paso con capturas. Descarga e informe quedan disponibles al terminar.";
+      document.getElementById("informeEmbedHint").textContent =
+        "Capturas por paso (Hooks). Se omite PNG solo si está duplicado y la config lo permite; sin browser no hay captura.";
+      document.getElementById("informeFrame").src = "about:blank";
+      setEvidenciaLinksEnabled(false);
+      ultimaCorridaMeta = null;
+    }
+
+    function mostrarEvidenciaActions(data) {
+      ultimaCorridaMeta = data || null;
+      const box = document.getElementById("evidenciaActions");
+      const fallo = !data || data.ok === false;
+      box.style.display = "block";
+      box.classList.toggle("is-fail", !!fallo);
+
+      if (!data || !data.tieneEvidencia) {
+        document.getElementById("evidenciaActionsTitle").textContent = fallo
+          ? "Salió con fallas · Sin carpeta de evidencia"
+          : "OK · Sin carpeta de evidencia";
+        document.getElementById("evidenciaRuta").textContent = data && data.error
+          ? data.error
+          : "No se encontró carpeta Ejecucion_* para esta corrida. Abrí Detalle técnico para ver el log.";
+        document.getElementById("informeFrame").src = "about:blank";
+        document.getElementById("informeEmbedHint").textContent =
+          "Sin informe HTML todavía. Los botones de descarga/informe se habilitan cuando hay evidencia.";
+        setEvidenciaLinksEnabled(false);
+        abrirDetalleTecnico(true);
+        return;
+      }
+
+      document.getElementById("evidenciaActionsTitle").textContent = fallo
+        ? "Salió con fallas · Ver informe"
+        : "OK · Informe de la corrida";
+      document.getElementById("evidenciaRuta").textContent =
+        "También queda en disco: " + (data.evidenciaCarpeta || "");
+      const informeUrl = API_BASE + (data.evidenciaInformeUrl || ("/run/" + data.runId + "/informe"));
+      const zipUrl = API_BASE + (data.evidenciaZipUrl || ("/run/" + data.runId + "/evidencia.zip"));
+      setEvidenciaLinksEnabled(true, zipUrl, informeUrl);
+      if (data.evidenciaInforme || data.evidenciaInformeUrl) {
+        document.getElementById("informeEmbedHint").textContent = fallo
+          ? "Corrida con fallos — revisá capturas y detalle abajo."
+          : "Corrida OK — paso a paso con capturas abajo.";
+        document.getElementById("informeFrame").src = informeUrl + "?t=" + Date.now();
+        setTimeout(function () {
+          box.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 200);
+      } else {
+        document.getElementById("informeFrame").src = "about:blank";
+        document.getElementById("informeEmbedHint").textContent =
+          "ZIP disponible; no se encontró el HTML Extent de esta corrida.";
+        abrirDetalleTecnico(true);
+      }
+    }
+
+    function ocultarStatus() {
+      const bar = document.getElementById("statusBar");
+      bar.className = "status-bar";
+      bar.textContent = "";
+    }
+
+    document.getElementById("btnVerInformeRun").addEventListener("click", function () {
+      const box = document.getElementById("evidenciaActions");
+      const meta = ultimaCorridaMeta;
+      const tieneInforme = meta && (meta.evidenciaInforme || meta.evidenciaInformeUrl);
+
+      if (tieneInforme) {
+        const informeUrl = API_BASE + (meta.evidenciaInformeUrl || ("/run/" + meta.runId + "/informe"));
+        if (box.style.display === "none") mostrarEvidenciaActions(meta);
+        box.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.open(informeUrl, "_blank", "noopener");
+        return;
+      }
+
+      abrirDetalleTecnico(true);
+      const logTxt = (document.getElementById("logPanel").textContent || "").trim();
+      abrirSotDialog({
+        mode: "alert",
+        eyebrow: "Informe",
+        title: "No hay informe HTML de esta corrida",
+        confirmLabel: "Entendido",
+        bodyHtml:
+          "<p>Esta corrida no generó (o no se encontró) el reporte Extent.</p>" +
+          "<p class=\"sot-dialog-hint\">Revisá el <b>Detalle técnico</b> abajo para ver el error de PowerShell/dotnet.</p>" +
+          (logTxt
+            ? "<pre class=\"sot-dialog-code\">" + escHtml(logTxt.slice(-2500)) + "</pre>"
+            : "<p class=\"sot-dialog-hint\">Si el escenario no está en la API, reiniciá <code>Iniciar-Runner.bat</code>.</p>")
+      });
+    });
+
+    let sotDialogResolver = null;
+
+    function cerrarSotDialog(resultado) {
+      const backdrop = document.getElementById("sotDialog");
+      backdrop.classList.remove("open");
+      backdrop.setAttribute("aria-hidden", "true");
+      const resolve = sotDialogResolver;
+      sotDialogResolver = null;
+      if (resolve) resolve(resultado);
+    }
+
+    function abrirSotDialog(opts) {
+      const options = opts || {};
+      const backdrop = document.getElementById("sotDialog");
+      const body = document.getElementById("sotDialogBody");
+      const foot = document.getElementById("sotDialogFoot");
+
+      document.getElementById("sotDialogEyebrow").textContent = options.eyebrow || "Runner SOT";
+      document.getElementById("sotDialogTitle").textContent = options.title || "Aviso";
+      body.innerHTML = options.bodyHtml || "";
+      foot.innerHTML = "";
+
+      const modo = options.mode || "alert";
+      if (modo === "confirm") {
+        const btnCancel = document.createElement("button");
+        btnCancel.type = "button";
+        btnCancel.textContent = options.cancelLabel || "Cancelar";
+        btnCancel.addEventListener("click", function () { cerrarSotDialog(false); });
+        foot.appendChild(btnCancel);
+
+        const btnOk = document.createElement("button");
+        btnOk.type = "button";
+        btnOk.className = "primary";
+        btnOk.textContent = options.confirmLabel || "Confirmar";
+        btnOk.addEventListener("click", function () { cerrarSotDialog(true); });
+        foot.appendChild(btnOk);
+        setTimeout(function () { btnOk.focus(); }, 30);
+      } else {
+        const btnOk = document.createElement("button");
+        btnOk.type = "button";
+        btnOk.className = "primary";
+        btnOk.textContent = options.confirmLabel || "Entendido";
+        btnOk.addEventListener("click", function () { cerrarSotDialog(true); });
+        foot.appendChild(btnOk);
+        setTimeout(function () { btnOk.focus(); }, 30);
+      }
+
+      backdrop.classList.add("open");
+      backdrop.setAttribute("aria-hidden", "false");
+
+      return new Promise(function (resolve) {
+        sotDialogResolver = resolve;
+      });
+    }
+
+    document.getElementById("sotDialogClose").addEventListener("click", function () {
+      cerrarSotDialog(false);
+    });
+
+    document.getElementById("sotDialog").addEventListener("click", function (ev) {
+      if (ev.target === document.getElementById("sotDialog")) cerrarSotDialog(false);
+    });
+
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Escape") return;
+      if (!document.getElementById("sotDialog").classList.contains("open")) return;
+      cerrarSotDialog(false);
+    });
+
+    function escHtml(texto) {
+      return String(texto == null ? "" : texto)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    document.getElementById("btnValidar").addEventListener("click", function () {
+      const esc = ESCENARIOS[escenarioActual];
+      mostrarStatus("Checklist manual: " + esc.prerequisitos.join(" · "), "info");
+    });
+
+    document.getElementById("btnPasos").addEventListener("click", function () {
+      const esc = ESCENARIOS[escenarioActual];
+      const cmd = comandoPowerShell(esc);
+      abrirSotDialog({
+        mode: "alert",
+        eyebrow: "Comando PowerShell",
+        title: "Escenario " + esc.num,
+        confirmLabel: "Cerrar",
+        bodyHtml:
+          "<p>" + escHtml(esc.titulo) + "</p>" +
+          "<div class=\"sot-dialog-meta\">" +
+          "<div><span class=\"lbl\">Tag</span><span class=\"val\">" + escHtml(esc.tag) + "</span></div>" +
+          "<div><span class=\"lbl\">Script</span><span class=\"val\">" + escHtml(esc.script) + "</span></div>" +
+          "</div>" +
+          "<pre class=\"sot-dialog-code\">" + escHtml(cmd) + "</pre>" +
+          "<p class=\"sot-dialog-hint\">También podés usar Copiar para llevarlo al portapapeles.</p>"
+      });
+    });
+
+    document.getElementById("btnCopiar").addEventListener("click", function () {
+      const esc = ESCENARIOS[escenarioActual];
+      const cmd = comandoPowerShell(esc);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cmd).then(function () {
+          mostrarStatus("Comando copiado al portapapeles.", "ok");
+        }).catch(function () {
+          abrirSotDialog({
+            mode: "alert",
+            eyebrow: "Portapapeles",
+            title: "Copiá el comando",
+            bodyHtml: "<pre class=\"sot-dialog-code\">" + escHtml(cmd) + "</pre>"
+          });
+        });
+      } else {
+        abrirSotDialog({
+          mode: "alert",
+          eyebrow: "Portapapeles",
+          title: "Copiá el comando",
+          bodyHtml: "<pre class=\"sot-dialog-code\">" + escHtml(cmd) + "</pre>"
+        });
+      }
+    });
+
+    async function consultarCorrida(runId) {
+      const res = await fetch(API_BASE + "/run/" + runId, { cache: "no-store" });
+      if (!res.ok) throw new Error("No se pudo consultar la corrida.");
+      return res.json();
+    }
+
+    function iniciarPolling(runId, titulo) {
+      if (pollTimer) clearInterval(pollTimer);
+      setRunProgress("running", titulo);
+      pollTimer = setInterval(async function () {
+        try {
+          const data = await consultarCorrida(runId);
+          // Actualiza el log en segundo plano (solo se ve si abrís "Detalle técnico").
+          if (data.log) mostrarLog(data.log);
+          if (data.estado !== "finalizado") return;
+
+          clearInterval(pollTimer);
+          pollTimer = null;
+          setEjecutando(false);
+
+          if (data.ok) {
+            setRunProgress("ok", "OK", "La corrida terminó correctamente.");
+            ocultarStatus();
+          } else {
+            setRunProgress(
+              "fail",
+              "Salió con fallas",
+              "Ver informe para el detalle" + (data.error ? " · " + data.error : "")
+            );
+            ocultarStatus();
+            abrirDetalleTecnico(true);
+          }
+          mostrarEvidenciaActions(data);
+        } catch (err) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          setEjecutando(false);
+          const msg = "No se pudo consultar la corrida: " + err.message;
+          mostrarLog(msg);
+          setRunProgress("fail", "Salió con fallas", msg);
+          abrirDetalleTecnico(true);
+          mostrarEvidenciaActions({ ok: false, error: msg, tieneEvidencia: false });
+        }
+      }, 2000);
+    }
+
+    document.getElementById("btnEjecutar").addEventListener("click", async function () {
+      const esc = ESCENARIOS[escenarioActual];
+
+      if (!servidorOnline) {
+        mostrarStatus("Servidor no disponible. Doble clic en Iniciar-Runner.bat", "warn");
+        await abrirSotDialog({
+          mode: "alert",
+          eyebrow: "Servidor local",
+          title: "Runner no disponible",
+          confirmLabel: "Entendido",
+          bodyHtml:
+            "<p>Para ejecutar desde el navegador necesitás el servidor local.</p>" +
+            "<div class=\"sot-dialog-meta\">" +
+            "<div><span class=\"lbl\">1</span><span class=\"val\">Carpeta RunnerOperador</span></div>" +
+            "<div><span class=\"lbl\">2</span><span class=\"val\">Doble clic en Iniciar-Runner.bat</span></div>" +
+            "<div><span class=\"lbl\">3</span><span class=\"val\">Abrí http://localhost:5050/</span></div>" +
+            "<div><span class=\"lbl\">4</span><span class=\"val\">No cierres la ventana negra</span></div>" +
+            "</div>" +
+            "<p class=\"sot-dialog-hint\">Alternativa manual:</p>" +
+            "<pre class=\"sot-dialog-code\">" + escHtml(comandoPowerShell(esc)) + "</pre>"
+        });
+        return;
+      }
+
+      if (corridaEnCurso) return;
+
+      const confirmar = await abrirSotDialog({
+        mode: "confirm",
+        eyebrow: "Ejecutar corrida",
+        title: "Escenario " + esc.num,
+        confirmLabel: "Ejecutar",
+        cancelLabel: "Cancelar",
+        bodyHtml:
+          "<p>" + escHtml(esc.titulo) + "</p>" +
+          "<div class=\"sot-dialog-meta\">" +
+          "<div><span class=\"lbl\">Script</span><span class=\"val\">" + escHtml(esc.script) + "</span></div>" +
+          (esc.extraArgs
+            ? "<div><span class=\"lbl\">Args</span><span class=\"val\">" + escHtml(esc.extraArgs) + "</span></div>"
+            : "") +
+          "<div><span class=\"lbl\">Tag</span><span class=\"val\">" + escHtml(esc.tag) + "</span></div>" +
+          "</div>" +
+          "<p class=\"sot-dialog-hint\">Puede tardar varios minutos (Playwright + SOT). El log se muestra en vivo abajo.</p>"
+      });
+      if (!confirmar) return;
+
+      setEjecutando(true);
+      ocultarStatus();
+      mostrarLog("");
+      ocultarEvidenciaActions();
+      setRunProgress("loading", esc.titulo, "Preparando la corrida…");
+
+      try {
+        const res = await fetch(API_BASE + "/run/" + escenarioActual, { method: "POST" });
+        const data = await res.json();
+
+        if (res.status === 409) {
+          setEjecutando(false);
+          setRunProgress("idle");
+          mostrarStatus(data.error || "Ya hay una corrida en curso.", "warn");
+          return;
+        }
+        if (!res.ok && res.status !== 202) {
+          setEjecutando(false);
+          const errMsg = data.error || ("No se pudo iniciar la corrida (HTTP " + res.status + ").");
+          mostrarLog(errMsg + "\n\nSi el escenario es nuevo (ej. 30), cerrá la ventana negra del Runner y volvé a abrir Iniciar-Runner.bat.");
+          setRunProgress("fail", "Salió con fallas", errMsg);
+          abrirDetalleTecnico(true);
+          mostrarEvidenciaActions({ ok: false, error: errMsg, tieneEvidencia: false });
+          return;
+        }
+        setRunProgress("running", esc.titulo);
+        iniciarPolling(data.runId, esc.titulo);
+      } catch (err) {
+        setEjecutando(false);
+        const msg = "Error de red: " + err.message;
+        mostrarLog(msg);
+        setRunProgress("fail", "Salió con fallas", msg);
+        abrirDetalleTecnico(true);
+        mostrarEvidenciaActions({ ok: false, error: msg, tieneEvidencia: false });
+      }
+    });
+
+    // ---------- Navegación de vistas ----------
+    const SUBTITULOS = {
+      runner: "Elegí un grupo de escenarios, abrí el caso, revisá prerequisitos y ejecutá.",
+      piloto: "Generá el caso con el asistente y asignalo a un grupo de testing en el Runner.",
+      config: "Datos de acceso SOT y parametría avanzada.",
+      ayuda: "Guía rápida y manual de la automatización SOT."
+    };
+
+    let manualCargado = false;
+
+    function cambiarVista(vista) {
+      document.querySelectorAll(".nav-item").forEach(function (b) {
+        b.classList.toggle("active", b.getAttribute("data-view") === vista);
+      });
+      document.querySelectorAll(".view").forEach(function (v) {
+        v.classList.toggle("active", v.id === "view-" + vista);
+      });
+      document.getElementById("headerSubtitle").textContent = SUBTITULOS[vista] || "";
+
+      if (vista === "config") cargarConfigCliente();
+      if (vista === "ayuda" && !manualCargado) cargarManual();
+      if (vista === "piloto") {
+        pilotoCargarCredencialesLocales();
+        pilotoRefrescarBorradores();
+      }
+      medirChrome();
+    }
+
+    // ---------- Configuración simple del cliente ----------
+    let listaAvanzadaCargada = false;
+    let clienteStatusTimer = null;
+
+    function ocultarClienteStatus() {
+      const bar = document.getElementById("clienteStatus");
+      if (!bar) return;
+      bar.className = "status-bar";
+      bar.textContent = "";
+    }
+
+    function mostrarClienteStatus(mensaje, tipo, opts) {
+      opts = opts || {};
+      const bar = document.getElementById("clienteStatus");
+      if (!bar) return;
+
+      if (clienteStatusTimer) {
+        clearTimeout(clienteStatusTimer);
+        clienteStatusTimer = null;
+      }
+
+      bar.textContent = mensaje;
+      bar.className = "status-bar visible " + (tipo || "info");
+
+      if (opts.scroll !== false) {
+        bar.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      // Por defecto: mensajes finales son temporales; "en curso" permanece hasta el siguiente.
+      const temporal = opts.temporal !== undefined
+        ? opts.temporal
+        : (tipo === "ok" || tipo === "error" || tipo === "warn");
+
+      if (temporal) {
+        const ms = opts.ms || 4500;
+        clienteStatusTimer = setTimeout(function () {
+          ocultarClienteStatus();
+          clienteStatusTimer = null;
+        }, ms);
+      }
+    }
+
+    function setHintPassword(id, tiene) {
+      const el = document.getElementById(id);
+      if (tiene) {
+        el.textContent = "Ya hay una contraseña guardada. Dejá el campo vacío para mantenerla.";
+        el.className = "hint set";
+      } else {
+        el.textContent = "Sin contraseña guardada todavía.";
+        el.className = "hint";
+      }
+    }
+
+    // ----- Lista de usuarios SOT (roles) -----
+    function crearFilaUsuarioSot(rol, usuario, tienePassword) {
+      const row = document.createElement("div");
+      row.className = "usuario-sot-row";
+      const hint = tienePassword
+        ? '<span class="usuario-sot-hint set">Contraseña guardada. Dejá vacío para mantenerla.</span>'
+        : "";
+      row.innerHTML =
+        '<div><input type="text" class="sot-rol" placeholder="ej. SOT Supervisor" value="' + escaparHtml(rol || "") + '" />' +
+        '<span class="rol-principal" style="display:none;">Principal (usado por la automatización)</span></div>' +
+        '<input type="text" class="sot-usuario" autocomplete="off" placeholder="ej. sot1" value="' + escaparHtml(usuario || "") + '" />' +
+        '<div><input type="password" class="sot-pass" autocomplete="new-password" placeholder="••••••••" />' + hint + '</div>' +
+        '<button type="button" class="btn-quitar-sot" title="Quitar usuario">&times;</button>';
+      row.querySelector(".btn-quitar-sot").addEventListener("click", function () {
+        row.remove();
+        actualizarPrincipalUsuarioSot();
+      });
+      return row;
+    }
+
+    function actualizarPrincipalUsuarioSot() {
+      const filas = document.querySelectorAll("#usuariosSotList .usuario-sot-row");
+      filas.forEach(function (row, i) {
+        const marca = row.querySelector(".rol-principal");
+        if (marca) marca.style.display = (i === 0) ? "block" : "none";
+        const btnQuitar = row.querySelector(".btn-quitar-sot");
+        // No permitir quitar si es la única fila
+        if (btnQuitar) btnQuitar.disabled = filas.length <= 1;
+      });
+    }
+
+    function renderUsuariosSot(lista) {
+      const cont = document.getElementById("usuariosSotList");
+      cont.innerHTML = "";
+      if (!lista || lista.length === 0) {
+        cont.appendChild(crearFilaUsuarioSot("SOT Supervisor", "", false));
+      } else {
+        lista.forEach(function (u) {
+          cont.appendChild(crearFilaUsuarioSot(u.rol, u.usuario, u.tienePassword));
+        });
+      }
+      actualizarPrincipalUsuarioSot();
+    }
+
+    document.getElementById("btnAgregarUsuarioSot").addEventListener("click", function () {
+      document.getElementById("usuariosSotList").appendChild(
+        crearFilaUsuarioSot("SOT Supervisor", "", false));
+      actualizarPrincipalUsuarioSot();
+    });
+
+    function recolectarUsuariosSot() {
+      const filas = document.querySelectorAll("#usuariosSotList .usuario-sot-row");
+      const out = [];
+      filas.forEach(function (row) {
+        const usuario = row.querySelector(".sot-usuario").value.trim();
+        if (!usuario) return;
+        out.push({
+          rol: row.querySelector(".sot-rol").value.trim(),
+          usuario: usuario,
+          password: row.querySelector(".sot-pass").value
+        });
+      });
+      return out;
+    }
+
+    // Catálogo de sucursales (nombres desde COBIS cl_oficina). El campo queda editable
+    // por si el selector del SOT muestra un nombre distinto.
+    const SUCURSALES = [
+      { codigo: "30", nombre: "25 de Mayo" },
+      { codigo: "79", nombre: "Centro Comercial El Punto" },
+      { codigo: "113", nombre: "Cafayate" },
+      { codigo: "115", nombre: "Cachi" },
+      { codigo: "120", nombre: "Batalla de Salta" },
+      { codigo: "121", nombre: "Cerrillos" },
+      { codigo: "128", nombre: "Aguaray" },
+      { codigo: "131", nombre: "San Martin" },
+      { codigo: "133", nombre: "Shopping" },
+      { codigo: "153", nombre: "Apolinario Saravia" },
+      { codigo: "196", nombre: "Alvarado" },
+      { codigo: "301", nombre: "Cordoba" },
+      { codigo: "324", nombre: "Alem" },
+      { codigo: "351", nombre: "Villa Allende" },
+      { codigo: "481", nombre: "Banfield" },
+      { codigo: "501", nombre: "Flores Norte" },
+      { codigo: "540", nombre: "Casa Central" },
+      { codigo: "544", nombre: "Villa Regina" },
+      { codigo: "558", nombre: "Cipoletti" },
+      { codigo: "682", nombre: "Adrogue" },
+      { codigo: "702", nombre: "Acebal" },
+      { codigo: "811", nombre: "Casa Matriz" },
+      { codigo: "872", nombre: "Arroyito Cordoba" }
+    ];
+
+    (function initSucursales() {
+      const datalist = document.getElementById("sucursalesList");
+      const inputSuc = document.getElementById("cliSucursal");
+      if (!datalist || !inputSuc) return;
+
+      datalist.innerHTML = SUCURSALES.map(function (s) {
+        const etiqueta = s.codigo + " - " + s.nombre;
+        return '<option value="' + etiqueta.replace(/"/g, "&quot;") + '"></option>';
+      }).join("");
+
+      inputSuc.addEventListener("change", function () {
+        const valor = this.value.trim();
+        const match = SUCURSALES.find(function (s) {
+          return valor === (s.codigo + " - " + s.nombre);
+        });
+        const codigoEl = document.getElementById("cliCodigoSucursal");
+        if (!codigoEl) return;
+        if (match) {
+          codigoEl.value = match.codigo;
+          return;
+        }
+        const pref = valor.match(/^(\d+)\s*-/);
+        if (pref) codigoEl.value = pref[1];
+      });
+    })();
+
+    async function cargarConfigCliente() {
+      if (!servidorOnline) {
+        mostrarClienteStatus("El servidor no está disponible. Iniciá Iniciar-Runner.bat.", "warn");
+        return;
+      }
+      try {
+        const res = await fetch(API_BASE + "/config/cliente", { cache: "no-store" });
+        const d = await res.json();
+        if (!res.ok || !d.ok) {
+          mostrarClienteStatus(d.error || "No se pudo cargar la configuración.", "error");
+          return;
+        }
+        document.getElementById("cliUsuario").value = d.usuario || "";
+        document.getElementById("cliSucursal").value = d.sucursal || "";
+        document.getElementById("cliCodigoSucursal").value = d.codigoSucursal || "";
+        renderUsuariosSot(d.usuariosSot || []);
+        document.getElementById("cliCobisServidor").value = d.cobisServidor || "";
+        document.getElementById("cliCobisHost").value = d.cobisHost || "";
+        document.getElementById("cliPuertoSybase").value = d.puertoSybase || "";
+        document.getElementById("cliCobisUsuario").value = d.cobisUsuario || "";
+        document.getElementById("cliCobisBaseDatos").value = d.cobisBaseDatos || "";
+        document.getElementById("cliSqlSotServidor").value = d.sqlSotServidor || "";
+        document.getElementById("cliSqlSotPuerto").value = d.sqlSotPuerto || "";
+        document.getElementById("cliSqlSotUsuario").value = d.sqlSotUsuario || "";
+        document.getElementById("cliSqlSotBaseDatos").value = d.sqlSotBaseDatos || "";
+        // Los campos de contraseña arrancan vacíos (no se exponen las actuales)
+        document.getElementById("cliPassLogin").value = "";
+        document.getElementById("cliPassCobis").value = "";
+        document.getElementById("cliPassSqlSot").value = "";
+        setHintPassword("hintPassLogin", d.tienePasswordLogin);
+        setHintPassword("hintPassCobis", d.tienePasswordCobis);
+        setHintPassword("hintPassSqlSot", d.tienePasswordSqlSot);
+        mostrarClienteStatus("Configuración cargada.", "info");
+      } catch (err) {
+        mostrarClienteStatus("Error de red: " + err.message, "error");
+      }
+    }
+
+    document.getElementById("btnClienteRecargar").addEventListener("click", cargarConfigCliente);
+
+    function recolectarConfigClienteBody() {
+      return {
+        usuario: document.getElementById("cliUsuario").value,
+        sucursal: document.getElementById("cliSucursal").value,
+        codigoSucursal: document.getElementById("cliCodigoSucursal").value,
+        usuariosSot: recolectarUsuariosSot(),
+        cobisServidor: document.getElementById("cliCobisServidor").value,
+        cobisHost: document.getElementById("cliCobisHost").value,
+        puertoSybase: document.getElementById("cliPuertoSybase").value,
+        cobisUsuario: document.getElementById("cliCobisUsuario").value,
+        cobisBaseDatos: document.getElementById("cliCobisBaseDatos").value,
+        sqlSotServidor: document.getElementById("cliSqlSotServidor").value,
+        sqlSotPuerto: document.getElementById("cliSqlSotPuerto").value,
+        sqlSotUsuario: document.getElementById("cliSqlSotUsuario").value,
+        sqlSotBaseDatos: document.getElementById("cliSqlSotBaseDatos").value,
+        passwordLogin: document.getElementById("cliPassLogin").value,
+        passwordCobis: document.getElementById("cliPassCobis").value,
+        passwordSqlSot: document.getElementById("cliPassSqlSot").value
+      };
+    }
+
+    async function probarConexionCliente(endpoint, etiqueta) {
+      if (!servidorOnline) {
+        mostrarClienteStatus("El servidor no está disponible.", "warn", { temporal: true, ms: 5000 });
+        return;
+      }
+
+      mostrarClienteStatus("Probando conexión " + etiqueta + "...", "info", { temporal: false });
+      try {
+        const res = await fetch(API_BASE + endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(recolectarConfigClienteBody())
+        });
+        const d = await res.json();
+        if (!res.ok || !d.ok) {
+          mostrarClienteStatus(d.error || ("No se pudo conectar a " + etiqueta + "."), "error", { temporal: true, ms: 6000 });
+          return;
+        }
+        mostrarClienteStatus(
+          (d.mensaje || ("Conexión " + etiqueta + " exitosa.")) + " Base: " + (d.baseDatos || "—"),
+          "ok",
+          { temporal: true, ms: 5000 }
+        );
+      } catch (err) {
+        mostrarClienteStatus("Error de red: " + err.message, "error", { temporal: true, ms: 6000 });
+      }
+    }
+
+    document.getElementById("btnProbarSqlSot").addEventListener("click", function () {
+      probarConexionCliente("/config/cliente/probar-sql-sot", "SQL SOT");
+    });
+
+    document.getElementById("btnProbarCobis").addEventListener("click", function () {
+      probarConexionCliente("/config/cliente/probar-cobis", "COBIS");
+    });
+
+    document.getElementById("btnClienteGuardar").addEventListener("click", async function () {
+      if (!servidorOnline) {
+        mostrarClienteStatus("El servidor no está disponible.", "warn");
+        return;
+      }
+      try {
+        const res = await fetch(API_BASE + "/config/cliente", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(recolectarConfigClienteBody())
+        });
+        const d = await res.json();
+        if (!res.ok || !d.ok) {
+          mostrarClienteStatus(d.error || "No se pudo guardar.", "error");
+          return;
+        }
+        mostrarClienteStatus("Configuración guardada correctamente (se crearon copias .bak).", "ok");
+        cargarConfigCliente();
+      } catch (err) {
+        mostrarClienteStatus("Error de red: " + err.message, "error");
+      }
+    });
+
+    document.getElementById("btnToggleAvanzada").addEventListener("click", function () {
+      const cont = document.getElementById("configAvanzada");
+      const abierto = cont.style.display !== "none";
+      if (abierto) {
+        cont.style.display = "none";
+        this.textContent = "Configuración avanzada ▾";
+      } else {
+        cont.style.display = "block";
+        this.textContent = "Configuración avanzada ▴";
+        if (!listaAvanzadaCargada) { cargarListaConfig(); listaAvanzadaCargada = true; }
+      }
+    });
+
+    document.querySelectorAll(".nav-item").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        cambiarVista(btn.getAttribute("data-view"));
+      });
+    });
+
+    // ---------- Generar con asistente + grupos de testing ----------
+    const PILOTO_LS_KEY = "sot-runner-piloto-jira";
+    const PILOTO_CAT_ID = "grp-sin-clasificar";
+    let pilotoToastTimer = null;
+    let pilotoToastEscenarioId = null;
+    let pilotoToastGrupoId = null;
+    let pilotoGruposCache = [];
+
+    function pilotoEsCategoriaTesting(cat) {
+      return !!(cat && (cat.testing || String(cat.id || "").indexOf("grp-") === 0));
+    }
+
+    function pilotoLimpiarCategoriasTesting() {
+      for (var i = CATEGORIAS.length - 1; i >= 0; i--) {
+        if (pilotoEsCategoriaTesting(CATEGORIAS[i])) CATEGORIAS.splice(i, 1);
+      }
+    }
+
+    function pilotoAsegurarCategoriasDesdeGrupos(grupos) {
+      pilotoLimpiarCategoriasTesting();
+      pilotoGruposCache = grupos || [];
+      if (!pilotoGruposCache.length) {
+        pilotoGruposCache = [{ id: PILOTO_CAT_ID, nombre: "Testing (sin clasificar)", sub: "Casos del asistente aún sin grupo" }];
+      }
+      pilotoGruposCache.forEach(function (g) {
+        CATEGORIAS.push({
+          id: g.id,
+          nombre: g.nombre,
+          sub: g.sub || "Grupo de testing",
+          escenarios: [],
+          testing: true
+        });
+      });
+      pilotoRellenarSelectGrupos();
+    }
+
+    function pilotoRellenarSelectGrupos() {
+      const sel = document.getElementById("pilotoGrupoSelect");
+      if (!sel) return;
+      const actual = sel.value;
+      sel.innerHTML = (pilotoGruposCache || []).map(function (g) {
+        return '<option value="' + escaparAttr(g.id) + '">' + escaparAttr(g.nombre) + "</option>";
+      }).join("");
+      if (actual && [].some.call(sel.options, function (o) { return o.value === actual; }))
+        sel.value = actual;
+      else if (sel.options.length)
+        sel.value = sel.options[0].value;
+    }
+
+    function pilotoActualizarModoGrupo() {
+      const esNuevo = !!(document.getElementById("pilotoGrupoModoNuevo") && document.getElementById("pilotoGrupoModoNuevo").checked);
+      const boxExistente = document.getElementById("pilotoGrupoExistenteBox");
+      const boxNuevo = document.getElementById("pilotoGrupoNuevoBox");
+      const sel = document.getElementById("pilotoGrupoSelect");
+      const inp = document.getElementById("pilotoGrupoNuevo");
+      if (boxExistente) boxExistente.style.display = esNuevo ? "none" : "block";
+      if (boxNuevo) boxNuevo.style.display = esNuevo ? "block" : "none";
+      if (sel) sel.disabled = esNuevo;
+      if (inp) {
+        inp.disabled = !esNuevo;
+        if (!esNuevo) inp.value = "";
+      }
+    }
+
+    function pilotoInferirTituloDesdeFeature(featureText) {
+      const m = String(featureText || "").match(/^\s*Feature:\s*(.+)$/im);
+      if (!m) return "";
+      var t = m[1].trim();
+      t = t.replace(/^Piloto\s*[—\-–:]?\s*/i, "").replace(/\s*\[[^\]]+\]\s*$/, "").trim();
+      return t;
+    }
+
+    function pilotoCatPorId(id) {
+      return CATEGORIAS.find(function (c) { return c.id === id; });
+    }
+
+    function pilotoRegistrarEnCatalogo(b) {
+      if (!b || !b.id) return;
+      const filterTag = b.filterTag || ("PilotoRun_" + String(b.nombre || "Borrador").replace(/\.feature$/i, "").replace(/[^\w]+/g, "_"));
+      const descripcion = (b.descripcion || b.corto || "").trim()
+        || ("Caso generado con asistente" + (b.grupoNombre ? (" · grupo «" + b.grupoNombre + "»") : "") + ".");
+      ESCENARIOS[b.id] = {
+        num: b.id.replace(/^piloto-/, "P-"),
+        tipo: "smoke",
+        titulo: b.titulo || b.nombre,
+        corto: (b.grupoNombre ? (b.grupoNombre + " · ") : "") + (b.corto || TruncarTexto(descripcion, 80) || b.nombre || ""),
+        descripcion: descripcion,
+        tag: b.tag || ("@Piloto @" + filterTag),
+        resultado: "Informe HTML + capturas PNG + ZIP descargable",
+        script: "run-PilotoBorrador.ps1",
+        extraArgs: "-Feature " + (b.nombre || "") + " -FilterTag " + filterTag,
+        piloto: true,
+        pilotoArchivo: b.nombre,
+        grupoId: b.grupoId || PILOTO_CAT_ID,
+        prerequisitos: [
+          "Configuración SOT válida (usuario/sucursal)",
+          "Caja abierta del tipo/moneda indicada (ej. Normal | U$S)",
+          "Capturas: Hooks AfterStep (sí con UI; no si falló antes / sin browser / duplicado omitido)"
+        ],
+        evidencias: [
+          "Informe HTML Extent embebido (paso a paso)",
+          "Capturas PNG por paso",
+          "Descargar evidencias (ZIP)"
+        ]
+      };
+    }
+
+    function TruncarTexto(t, max) {
+      t = String(t || "").trim();
+      if (t.length <= max) return t;
+      return t.slice(0, max - 1) + "…";
+    }
+
+    function pilotoInferirResumenDesdeFeature(featureText) {
+      const m = String(featureText || "").match(/^\s*#\s*Resumen:\s*(.+)$/im);
+      return m ? m[1].trim() : "";
+    }
+
+    function pilotoSincronizarCatalogo(payload) {
+      const grupos = payload && payload.grupos ? payload.grupos : [];
+      const lista = payload && payload.casos ? payload.casos : (Array.isArray(payload) ? payload : []);
+      pilotoAsegurarCategoriasDesdeGrupos(grupos);
+
+      Object.keys(ESCENARIOS).forEach(function (id) {
+        if (ESCENARIOS[id] && ESCENARIOS[id].piloto) delete ESCENARIOS[id];
+      });
+      CATEGORIAS.forEach(function (c) {
+        if (pilotoEsCategoriaTesting(c)) c.escenarios = [];
+      });
+
+      (lista || []).forEach(function (b) {
+        pilotoRegistrarEnCatalogo(b);
+        const gid = b.grupoId || PILOTO_CAT_ID;
+        let cat = pilotoCatPorId(gid);
+        if (!cat) {
+          cat = pilotoCatPorId(PILOTO_CAT_ID);
+        }
+        if (cat) cat.escenarios.push(b.id);
+      });
+
+      renderCategorias();
+      if (pilotoEsCategoriaTesting(pilotoCatPorId(categoriaActual))) {
+        const cat = pilotoCatPorId(categoriaActual);
+        if (!cat || !cat.escenarios.length) {
+          escenarioActual = CATEGORIAS[0].escenarios[0];
+        } else if (cat.escenarios.indexOf(escenarioActual) === -1) {
+          escenarioActual = cat.escenarios[0];
+        }
+        renderLista();
+        if (ESCENARIOS[escenarioActual]) mostrarEscenario(ESCENARIOS[escenarioActual]);
+      } else {
+        renderLista();
+      }
+    }
+
+    async function pilotoCargarEnRunner(irAlEscenarioId, irAlGrupoId) {
+      if (!servidorOnline) return null;
+      try {
+        const res = await fetch(API_BASE + "/piloto/escenarios", { cache: "no-store" });
+        const data = await res.json();
+        pilotoSincronizarCatalogo(data);
+        if (irAlEscenarioId && ESCENARIOS[irAlEscenarioId]) {
+          categoriaActual = irAlGrupoId || ESCENARIOS[irAlEscenarioId].grupoId || PILOTO_CAT_ID;
+          escenarioActual = irAlEscenarioId;
+          renderCategorias();
+          renderLista();
+          mostrarEscenario(ESCENARIOS[escenarioActual]);
+          cambiarVista("runner");
+        }
+        return data;
+      } catch (err) {
+        console.warn("pilotoCargarEnRunner", err);
+        return null;
+      }
+    }
+
+    function pilotoMostrarToast(titulo, sub, escenarioId, grupoId) {
+      const toast = document.getElementById("pilotoToast");
+      document.getElementById("pilotoToastTitle").textContent = titulo || "Se creó correctamente";
+      document.getElementById("pilotoToastSub").textContent = sub || "Ya está en el Runner · grupo de testing";
+      pilotoToastEscenarioId = escenarioId || null;
+      pilotoToastGrupoId = grupoId || null;
+      toast.classList.add("visible");
+      toast.setAttribute("aria-hidden", "false");
+      if (pilotoToastTimer) clearTimeout(pilotoToastTimer);
+      pilotoToastTimer = setTimeout(function () {
+        toast.classList.remove("visible");
+        toast.setAttribute("aria-hidden", "true");
+        pilotoToastTimer = null;
+      }, 2000);
+    }
+
+    document.getElementById("pilotoToastVer").addEventListener("click", function () {
+      const id = pilotoToastEscenarioId;
+      const gid = pilotoToastGrupoId;
+      if (pilotoToastTimer) { clearTimeout(pilotoToastTimer); pilotoToastTimer = null; }
+      document.getElementById("pilotoToast").classList.remove("visible");
+      if (id) pilotoCargarEnRunner(id, gid);
+      else {
+        categoriaActual = gid || PILOTO_CAT_ID;
+        cambiarVista("runner");
+        renderCategorias();
+        renderLista();
+      }
+    });
+
+    function pilotoMostrarStatus(msg, tipo) {
+      const bar = document.getElementById("pilotoStatus");
+      if (!bar) return;
+      bar.textContent = msg || "";
+      bar.className = "status-bar visible " + (tipo || "info");
+    }
+
+    function pilotoListaHtml(items, vacio) {
+      if (!items || !items.length) return "<li style=\"color:var(--muted)\">" + (vacio || "Ninguno") + "</li>";
+      return items.map(function (x) { return "<li>" + String(x).replace(/</g, "&lt;") + "</li>"; }).join("");
+    }
+
+    function pilotoCargarCredencialesLocales() {
+      try {
+        const raw = localStorage.getItem(PILOTO_LS_KEY);
+        if (!raw) return;
+        const o = JSON.parse(raw);
+        if (o.email) document.getElementById("pilotoJiraEmail").value = o.email;
+        if (o.token) document.getElementById("pilotoJiraToken").value = o.token;
+        document.getElementById("pilotoRememberJira").checked = true;
+      } catch (e) {}
+    }
+
+    function pilotoGuardarCredencialesLocalesSiCorresponde() {
+      const remember = document.getElementById("pilotoRememberJira").checked;
+      if (!remember) {
+        try { localStorage.removeItem(PILOTO_LS_KEY); } catch (e) {}
+        return;
+      }
+      try {
+        localStorage.setItem(PILOTO_LS_KEY, JSON.stringify({
+          email: document.getElementById("pilotoJiraEmail").value || "",
+          token: document.getElementById("pilotoJiraToken").value || ""
+        }));
+      } catch (e) {}
+    }
+
+    async function pilotoRefrescarBorradores() {
+      const cont = document.getElementById("pilotoListaBorradores");
+      if (!cont) return;
+      if (!servidorOnline) {
+        cont.innerHTML = "Servidor offline. Iniciá Iniciar-Runner.bat.";
+        return;
+      }
+      try {
+        const res = await fetch(API_BASE + "/piloto/escenarios", { cache: "no-store" });
+        const data = await res.json();
+        pilotoSincronizarCatalogo(data);
+        const casos = data.casos || [];
+        if (!casos.length) {
+          cont.innerHTML = "Todavía no hay casos. Generá uno con el asistente y asignalo a un grupo.";
+          return;
+        }
+        cont.innerHTML = casos.map(function (b) {
+          return "<div style=\"display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:6px;\">" +
+            "<span><strong>" + escaparHtml(b.grupoNombre || "—") + "</strong> · <code>" + escaparHtml(b.nombre) + "</code> · " + escaparHtml(b.titulo || "") + "</span>" +
+            "<button type=\"button\" class=\"danger-outline piloto-del-lista\" data-nombre=\"" + escaparHtml(b.nombre) + "\">Eliminar</button>" +
+            "</div>";
+        }).join("");
+        cont.querySelectorAll(".piloto-del-lista").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            pilotoEliminarBorrador(btn.getAttribute("data-nombre"));
+          });
+        });
+      } catch (err) {
+        cont.innerHTML = "No se pudo listar: " + err.message;
+      }
+    }
+
+    async function pilotoEliminarBorrador(nombre) {
+      if (!nombre) return;
+      const ok = await abrirSotDialog({
+        mode: "confirm",
+        eyebrow: "Grupos de testing",
+        title: "¿Eliminar caso?",
+        confirmLabel: "Eliminar",
+        cancelLabel: "Cancelar",
+        bodyHtml: "<p>Se quitará del Runner/grupo y se borrará <code>" + escHtml(nombre) + "</code>.</p>"
+      });
+      if (!ok) return;
+      try {
+        const res = await fetch(API_BASE + "/piloto/borradores/" + encodeURIComponent(nombre), { method: "DELETE" });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          mostrarStatus(data.error || "No se pudo eliminar.", "error");
+          pilotoMostrarStatus(data.error || "No se pudo eliminar.", "error");
+          return;
+        }
+        await pilotoCargarEnRunner(null);
+        await pilotoRefrescarBorradores();
+        mostrarStatus("Caso eliminado.", "ok");
+        pilotoMostrarStatus("Caso eliminado del grupo de testing.", "ok");
+      } catch (err) {
+        mostrarStatus("Error: " + err.message, "error");
+      }
+    }
+
+    document.getElementById("btnEliminarPiloto").addEventListener("click", function () {
+      const esc = ESCENARIOS[escenarioActual];
+      if (!esc || !esc.piloto || !esc.pilotoArchivo) return;
+      pilotoEliminarBorrador(esc.pilotoArchivo);
+    });
+
+    document.getElementById("btnPilotoAnalizar").addEventListener("click", async function () {
+      if (!servidorOnline) {
+        pilotoMostrarStatus("Servidor offline. Abrí Iniciar-Runner.bat y recargá.", "error");
+        return;
+      }
+      pilotoGuardarCredencialesLocalesSiCorresponde();
+      var textoBase = (document.getElementById("pilotoTexto").value || "").trim();
+      var monedaSel = (document.getElementById("pilotoMoneda") && document.getElementById("pilotoMoneda").value || "").trim();
+      var importeSel = (document.getElementById("pilotoImporte") && document.getElementById("pilotoImporte").value || "").trim();
+      var extras = [];
+      if (monedaSel) extras.push("Moneda de caja: " + monedaSel + " (selector UI Normal | " + (monedaSel === "Pesos" ? "$" : monedaSel === "Euro" ? "€" : "U$S") + ").");
+      if (importeSel) extras.push("Importe fijo: " + importeSel + ". Cargar importe " + importeSel + ".");
+      if (!/otros ingresos/i.test(textoBase) && (monedaSel || importeSel))
+        extras.unshift("Otros Ingresos.");
+      var textoManual = [textoBase].concat(extras).filter(Boolean).join("\n");
+
+      const fd = new FormData();
+      fd.append("tituloSugerido", document.getElementById("pilotoTitulo").value || "");
+      fd.append("jiraUrl", document.getElementById("pilotoJiraUrl").value || "");
+      fd.append("jiraEmail", document.getElementById("pilotoJiraEmail").value || "");
+      fd.append("jiraToken", document.getElementById("pilotoJiraToken").value || "");
+      fd.append("textoManual", textoManual);
+      const files = document.getElementById("pilotoFiles").files;
+      for (var i = 0; i < files.length; i++) fd.append("files", files[i]);
+
+      pilotoMostrarStatus("Analizando fuentes y steps del proyecto…", "info");
+      document.getElementById("btnPilotoAnalizar").disabled = true;
+      try {
+        const res = await fetch(API_BASE + "/piloto/analizar", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok || data.ok === false) {
+          pilotoMostrarStatus(data.error || "No se pudo analizar.", "error");
+          return;
+        }
+        document.getElementById("pilotoResultado").style.display = "block";
+        document.getElementById("pilotoVeredicto").textContent = data.veredicto || "—";
+        document.getElementById("pilotoPuede").textContent = data.puedeGenerar ? "Sí (revisar)" : "No — falta info";
+        document.getElementById("pilotoResumen").textContent = data.resumen || "";
+        document.getElementById("pilotoFaltantes").innerHTML = pilotoListaHtml(data.faltantes, "Nada crítico detectado");
+        const riesgos = [].concat(data.riesgos || [], data.avisos || [], data.hallazgos || []);
+        document.getElementById("pilotoRiesgos").innerHTML = pilotoListaHtml(riesgos, "Sin avisos");
+        document.getElementById("pilotoSteps").innerHTML = pilotoListaHtml(data.stepsReutilizables, "Ninguno detectado");
+        document.getElementById("pilotoFeature").value = data.featureBorrador || "";
+        const tituloCaso = document.getElementById("pilotoTituloCaso");
+        if (tituloCaso) {
+          tituloCaso.value = (document.getElementById("pilotoTitulo").value || "").trim()
+            || pilotoInferirTituloDesdeFeature(data.featureBorrador || "")
+            || "Caso piloto";
+        }
+        const resumenCaso = document.getElementById("pilotoResumenCaso");
+        if (resumenCaso) {
+          resumenCaso.value = (data.descripcionCaso || "").trim()
+            || pilotoInferirResumenDesdeFeature(data.featureBorrador || "")
+            || "";
+        }
+        pilotoActualizarModoGrupo();
+        const ticketMatch = (document.getElementById("pilotoJiraUrl").value || "").match(/([A-Z][A-Z0-9]+-\d+)/);
+        if (!document.getElementById("pilotoNombreArchivo").value) {
+          document.getElementById("pilotoNombreArchivo").value = ticketMatch
+            ? "Piloto_" + ticketMatch[1] + ".feature"
+            : "Piloto_" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "_") + ".feature";
+        }
+        await fetch(API_BASE + "/piloto/grupos", { cache: "no-store" })
+          .then(function (r) { return r.json(); })
+          .then(function (grupos) { pilotoAsegurarCategoriasDesdeGrupos(grupos); })
+          .catch(function () {});
+        const tipo = data.veredicto === "falta_info" ? "warn" : (data.veredicto === "crear" ? "ok" : "info");
+        pilotoMostrarStatus("Análisis listo: " + data.veredicto + ". Elegí el grupo de testing y guardá.", tipo);
+      } catch (err) {
+        pilotoMostrarStatus("Error: " + err.message, "error");
+      } finally {
+        document.getElementById("btnPilotoAnalizar").disabled = false;
+      }
+    });
+
+    document.getElementById("btnPilotoGuardar").addEventListener("click", async function () {
+      if (!servidorOnline) {
+        pilotoMostrarStatus("Servidor offline.", "error");
+        return;
+      }
+      const contenido = document.getElementById("pilotoFeature").value || "";
+      const nombre = document.getElementById("pilotoNombreArchivo").value || "";
+      const forzar = document.getElementById("pilotoForzarIncompleto").checked;
+      const tituloCaso = (document.getElementById("pilotoTituloCaso") && document.getElementById("pilotoTituloCaso").value || "").trim();
+      const resumenCaso = (document.getElementById("pilotoResumenCaso") && document.getElementById("pilotoResumenCaso").value || "").trim();
+      const modoNuevo = !!(document.getElementById("pilotoGrupoModoNuevo") && document.getElementById("pilotoGrupoModoNuevo").checked);
+      const grupoId = document.getElementById("pilotoGrupoSelect").value || PILOTO_CAT_ID;
+      const grupoNuevo = modoNuevo ? (document.getElementById("pilotoGrupoNuevo").value || "").trim() : "";
+      if (modoNuevo && !grupoNuevo) {
+        pilotoMostrarStatus("Ingresá el nombre del grupo nuevo o elegí uno existente.", "warn");
+        return;
+      }
+      pilotoMostrarStatus("Guardando en grupo de testing…", "info");
+      try {
+        const res = await fetch(API_BASE + "/piloto/guardar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nombre: nombre,
+            contenido: contenido,
+            titulo: tituloCaso || null,
+            resumen: resumenCaso || null,
+            forzarIncompleto: forzar,
+            grupoId: modoNuevo ? null : grupoId,
+            grupoNuevo: modoNuevo ? grupoNuevo : null
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          pilotoMostrarStatus(data.error || "No se pudo guardar.", "error");
+          return;
+        }
+        document.getElementById("pilotoGrupoNuevo").value = "";
+        if (document.getElementById("pilotoGrupoModoExistente"))
+          document.getElementById("pilotoGrupoModoExistente").checked = true;
+        pilotoActualizarModoGrupo();
+        await pilotoCargarEnRunner(null);
+        await pilotoRefrescarBorradores();
+        pilotoMostrarStatus(data.mensaje || "Guardado.", "ok");
+        pilotoMostrarToast(
+          "Se creó correctamente",
+          "Grupo: " + (data.grupoNombre || "testing") + " · " + (data.nombre || "caso"),
+          data.id,
+          data.grupoId
+        );
+      } catch (err) {
+        pilotoMostrarStatus("Error: " + err.message, "error");
+      }
+    });
+
+    document.getElementById("btnPilotoCopiar").addEventListener("click", async function () {
+      try {
+        await navigator.clipboard.writeText(document.getElementById("pilotoFeature").value || "");
+        pilotoMostrarStatus("Feature copiado al portapapeles.", "ok");
+      } catch (err) {
+        pilotoMostrarStatus("No se pudo copiar: " + err.message, "error");
+      }
+    });
+
+    document.getElementById("btnPilotoLimpiar").addEventListener("click", function () {
+      document.getElementById("pilotoTitulo").value = "";
+      document.getElementById("pilotoJiraUrl").value = "";
+      document.getElementById("pilotoTexto").value = "";
+      if (document.getElementById("pilotoMoneda")) document.getElementById("pilotoMoneda").value = "";
+      if (document.getElementById("pilotoImporte")) document.getElementById("pilotoImporte").value = "";
+      document.getElementById("pilotoFiles").value = "";
+      document.getElementById("pilotoFeature").value = "";
+      document.getElementById("pilotoNombreArchivo").value = "";
+      document.getElementById("pilotoGrupoNuevo").value = "";
+      if (document.getElementById("pilotoTituloCaso")) document.getElementById("pilotoTituloCaso").value = "";
+      if (document.getElementById("pilotoResumenCaso")) document.getElementById("pilotoResumenCaso").value = "";
+      if (document.getElementById("pilotoGrupoModoExistente")) document.getElementById("pilotoGrupoModoExistente").checked = true;
+      pilotoActualizarModoGrupo();
+      document.getElementById("pilotoResultado").style.display = "none";
+      pilotoMostrarStatus("Formulario limpio.", "info");
+    });
+
+    document.getElementById("btnPilotoRefrescarLista").addEventListener("click", function () {
+      pilotoRefrescarBorradores();
+    });
+
+    ["pilotoGrupoModoExistente", "pilotoGrupoModoNuevo"].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", pilotoActualizarModoGrupo);
+    });
+    pilotoActualizarModoGrupo();
+
+    // ---------- Vista Configuración ----------
+    let configArchivos = [];
+    let configActual = null;
+    let configObj = null;        // objeto JSON parseado (fuente de verdad en modo formulario)
+    let configModo = "form";     // "form" | "json"
+
+    function mostrarConfigStatus(mensaje, tipo) {
+      const bar = document.getElementById("configStatus");
+      bar.textContent = mensaje;
+      bar.className = "status-bar visible " + (tipo || "info");
+    }
+
+    async function cargarListaConfig() {
+      const cont = document.getElementById("configFiles");
+      if (!servidorOnline) {
+        cont.innerHTML = '<div class="config-secret-note">El servidor no está disponible. Iniciá Iniciar-Runner.bat.</div>';
+        return;
+      }
+      try {
+        const res = await fetch(API_BASE + "/config/files", { cache: "no-store" });
+        configArchivos = await res.json();
+        cont.innerHTML = configArchivos.map(function (f) {
+          const act = (configActual === f.name) ? " active" : "";
+          const miss = f.existe ? "" : " missing";
+          return '<button type="button" class="config-file' + act + miss + '" data-name="' + f.name + '"' +
+            (f.existe ? "" : " title=\"El archivo no existe todavía\"") + '>' +
+            '<span class="fname">' + f.name + '</span>' +
+            '<span class="fdesc">' + f.descripcion + (f.existe ? "" : " (no existe)") + '</span>' +
+            '</button>';
+        }).join("");
+
+        cont.querySelectorAll(".config-file").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            abrirConfig(btn.getAttribute("data-name"));
+          });
+        });
+      } catch (err) {
+        cont.innerHTML = '<div class="config-secret-note">Error cargando la lista: ' + err.message + '</div>';
+      }
+    }
+
+    async function abrirConfig(name) {
+      const meta = configArchivos.find(function (f) { return f.name === name; });
+      if (meta && !meta.existe) {
+        mostrarConfigStatus("Ese archivo no existe todavía. Elegí otro.", "warn");
+        return;
+      }
+      try {
+        const res = await fetch(API_BASE + "/config/file?name=" + encodeURIComponent(name), { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          mostrarConfigStatus(data.error || "No se pudo abrir el archivo.", "error");
+          return;
+        }
+        configActual = name;
+        document.getElementById("configFileName").textContent = name;
+        document.getElementById("configFileDesc").textContent = meta ? meta.descripcion : "";
+        document.getElementById("configTextarea").value = data.content;
+        document.querySelectorAll(".config-file").forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-name") === name);
+        });
+
+        // Intentar parsear para el modo parametría
+        try {
+          configObj = JSON.parse(data.content);
+          document.getElementById("configModoToggle").style.display = "inline-flex";
+          renderParametria();
+          aplicarModoConfig("form");
+          mostrarConfigStatus("Archivo cargado. Editá los valores y guardá.", "info");
+        } catch (e) {
+          // Si no parsea, caer al editor JSON crudo
+          configObj = null;
+          document.getElementById("configModoToggle").style.display = "none";
+          aplicarModoConfig("json");
+          mostrarConfigStatus("El archivo no es JSON válido; se muestra el editor de texto.", "warn");
+        }
+      } catch (err) {
+        mostrarConfigStatus("Error de red: " + err.message, "error");
+      }
+    }
+
+    // ----- Modo parametría (formulario) -----
+    function esComentario(k) { return k.charAt(0) === "_"; }
+
+    function setEnPath(obj, ruta, valor) {
+      let ref = obj;
+      for (let i = 0; i < ruta.length - 1; i++) ref = ref[ruta[i]];
+      ref[ruta[ruta.length - 1]] = valor;
+    }
+
+    function controlHtml(valor, ruta) {
+      const rutaAttr = encodeURIComponent(JSON.stringify(ruta));
+      if (typeof valor === "boolean") {
+        return '<select data-ruta="' + rutaAttr + '" data-tipo="boolean">' +
+          '<option value="true"' + (valor ? " selected" : "") + '>Sí (true)</option>' +
+          '<option value="false"' + (!valor ? " selected" : "") + '>No (false)</option>' +
+          '</select>';
+      }
+      if (typeof valor === "number") {
+        return '<input type="text" inputmode="numeric" data-ruta="' + rutaAttr + '" data-tipo="number" value="' + escaparHtml(String(valor)) + '" />';
+      }
+      const s = String(valor);
+      if (s === "true" || s === "false") {
+        return '<select data-ruta="' + rutaAttr + '" data-tipo="boolstring">' +
+          '<option value="true"' + (s === "true" ? " selected" : "") + '>Sí (true)</option>' +
+          '<option value="false"' + (s === "false" ? " selected" : "") + '>No (false)</option>' +
+          '</select>';
+      }
+      const esLargo = s.length > 55 || s.indexOf("//") !== -1 || s.indexOf("|") !== -1 || s.indexOf("{") !== -1;
+      if (esLargo) {
+        return '<textarea data-ruta="' + rutaAttr + '" data-tipo="string" spellcheck="false">' + escaparHtml(s) + '</textarea>';
+      }
+      return '<input type="text" data-ruta="' + rutaAttr + '" data-tipo="string" value="' + escaparHtml(s) + '" />';
+    }
+
+    // Convierte un objeto en una lista ordenada de items (campos y notas), asociando
+    // los comentarios (_nota…) al campo anterior como texto de ayuda.
+    function armarItems(obj) {
+      const items = [];
+      let ultimoCampo = null;
+      Object.keys(obj).forEach(function (k) {
+        if (esComentario(k)) {
+          const texto = obj[k];
+          if (typeof texto !== "string" || texto.trim() === "") return;
+          if (ultimoCampo && (k.indexOf("_nota") === 0 || k === "_" + ultimoCampo.key)) {
+            ultimoCampo.help.push(texto);
+          } else {
+            items.push({ tipo: "nota", texto: texto });
+            ultimoCampo = null;
+          }
+        } else {
+          const campo = { tipo: "campo", key: k, valor: obj[k], help: [] };
+          items.push(campo);
+          ultimoCampo = campo;
+        }
+      });
+      return items;
+    }
+
+    function esObjetoPlano(v) {
+      return v && typeof v === "object" && !Array.isArray(v);
+    }
+
+    function renderGrupo(obj, ruta) {
+      const items = armarItems(obj);
+      let html = "";
+      items.forEach(function (it) {
+        if (it.tipo === "nota") {
+          html += '<div class="param-note">' + escaparHtml(it.texto) + '</div>';
+          return;
+        }
+        const rutaCampo = ruta.concat(it.key);
+        if (esObjetoPlano(it.valor)) {
+          // Subsección anidada
+          const desc = it.valor._seccion || it.valor._paraQueEs || it.valor._nota || "";
+          html += '<details class="param-section" open><summary>' + escaparHtml(it.key) +
+            (desc ? '<span class="sec-desc">' + escaparHtml(desc) + '</span>' : "") +
+            '</summary><div class="param-body">' + renderGrupo(it.valor, rutaCampo) + '</div></details>';
+          return;
+        }
+        if (Array.isArray(it.valor)) {
+          const rutaAttr = encodeURIComponent(JSON.stringify(rutaCampo));
+          html += '<div class="param-field"><label>' + escaparHtml(it.key) + '</label>' +
+            '<textarea data-ruta="' + rutaAttr + '" data-tipo="json" spellcheck="false">' +
+            escaparHtml(JSON.stringify(it.valor, null, 2)) + '</textarea></div>';
+          return;
+        }
+        const ayuda = it.help.map(function (h) { return escaparHtml(h); }).join("<br>");
+        html += '<div class="param-field"><label>' + escaparHtml(it.key) + '</label>' +
+          controlHtml(it.valor, rutaCampo) +
+          (ayuda ? '<div class="fhelp">' + ayuda + '</div>' : "") +
+          '</div>';
+      });
+      return html;
+    }
+
+    function renderParametria() {
+      const cont = document.getElementById("configForm");
+      if (!configObj) { cont.innerHTML = ""; return; }
+      let html = "";
+      if (typeof configObj._instrucciones === "string" && configObj._instrucciones.trim() !== "") {
+        html += '<div class="param-intro">' + escaparHtml(configObj._instrucciones) + '</div>';
+      }
+      // Secciones de primer nivel
+      Object.keys(configObj).forEach(function (k) {
+        if (esComentario(k)) return;
+        const val = configObj[k];
+        if (esObjetoPlano(val)) {
+          const desc = val._seccion || val._paraQueEs || val._nota || "";
+          html += '<details class="param-section" open><summary>' + escaparHtml(k) +
+            (desc ? '<span class="sec-desc">' + escaparHtml(desc) + '</span>' : "") +
+            '</summary><div class="param-body">' + renderGrupo(val, [k]) + '</div></details>';
+        } else {
+          // Campo suelto en la raíz
+          html += '<div class="param-section"><div class="param-body">' +
+            '<div class="param-field"><label>' + escaparHtml(k) + '</label>' + controlHtml(val, [k]) + '</div>' +
+            '</div></div>';
+        }
+      });
+      cont.innerHTML = html;
+    }
+
+    // Sincroniza cambios del formulario dentro de configObj
+    document.getElementById("configForm").addEventListener("input", function (ev) {
+      const el = ev.target;
+      const rutaAttr = el.getAttribute("data-ruta");
+      if (!rutaAttr || !configObj) return;
+      const ruta = JSON.parse(decodeURIComponent(rutaAttr));
+      const tipo = el.getAttribute("data-tipo");
+      let valor = el.value;
+      if (tipo === "boolean") valor = (el.value === "true");
+      else if (tipo === "number") { const n = Number(el.value); valor = isNaN(n) ? el.value : n; }
+      else if (tipo === "json") {
+        try { valor = JSON.parse(el.value); el.style.borderColor = ""; }
+        catch (e) { el.style.borderColor = "#ef4444"; return; }
+      }
+      setEnPath(configObj, ruta, valor);
+    });
+
+    // ----- Alternar modo formulario / JSON -----
+    function aplicarModoConfig(modo) {
+      configModo = modo;
+      const form = document.getElementById("configForm");
+      const ta = document.getElementById("configTextarea");
+      const bForm = document.getElementById("btnModoForm");
+      const bJson = document.getElementById("btnModoJson");
+      if (modo === "json") {
+        // Reflejar el objeto actual en el textarea
+        if (configObj) ta.value = JSON.stringify(configObj, null, 2);
+        form.style.display = "none";
+        ta.style.display = "block";
+        if (bForm) bForm.classList.remove("active");
+        if (bJson) bJson.classList.add("active");
+      } else {
+        form.style.display = "grid";
+        ta.style.display = "none";
+        if (bForm) bForm.classList.add("active");
+        if (bJson) bJson.classList.remove("active");
+      }
+    }
+
+    document.getElementById("btnModoForm").addEventListener("click", function () {
+      // Al volver al formulario desde JSON, reparsear el texto por si lo editaron
+      if (configModo === "json") {
+        try {
+          configObj = JSON.parse(document.getElementById("configTextarea").value);
+          renderParametria();
+        } catch (e) {
+          mostrarConfigStatus("El JSON del editor no es válido; corregilo antes de volver a la parametría.", "error");
+          return;
+        }
+      }
+      aplicarModoConfig("form");
+    });
+
+    document.getElementById("btnModoJson").addEventListener("click", function () {
+      aplicarModoConfig("json");
+    });
+
+    document.getElementById("btnConfigRecargar").addEventListener("click", function () {
+      if (configActual) abrirConfig(configActual);
+      else mostrarConfigStatus("Primero elegí un archivo de la lista.", "warn");
+    });
+
+    document.getElementById("btnConfigGuardar").addEventListener("click", async function () {
+      if (!configActual) {
+        mostrarConfigStatus("Primero elegí un archivo de la lista.", "warn");
+        return;
+      }
+
+      let contenido;
+      if (configModo === "json" || !configObj) {
+        contenido = document.getElementById("configTextarea").value;
+        try { JSON.parse(contenido); }
+        catch (e) { mostrarConfigStatus("JSON inválido: " + e.message, "error"); return; }
+      } else {
+        contenido = JSON.stringify(configObj, null, 2);
+      }
+
+      try {
+        const res = await fetch(API_BASE + "/config/file", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: configActual, content: contenido })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          mostrarConfigStatus(data.error || "No se pudo guardar.", "error");
+          return;
+        }
+        mostrarConfigStatus("Guardado correctamente (se creó copia .bak).", "ok");
+      } catch (err) {
+        mostrarConfigStatus("Error de red: " + err.message, "error");
+      }
+    });
+
+    // ---------- Vista Ayuda: render de MANUAL.md ----------
+    function escaparHtml(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function escaparAttr(s) {
+      return escaparHtml(String(s || "")).replace(/"/g, "&quot;");
+    }
+
+    function slugManual(texto) {
+      return String(texto || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/<[^>]+>/g, "")
+        .replace(/[.:,()[\]{}"'¿?¡!]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function inline(texto) {
+      let t = escaparHtml(texto);
+      t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
+      t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, label, href) {
+        const safeHref = escaparAttr(href);
+        if (href.indexOf("#") === 0) {
+          return '<a href="' + safeHref + '" data-manual-anchor="' + safeHref.substring(1) + '">' + label + "</a>";
+        }
+        return '<a href="' + safeHref + '" target="_blank" rel="noopener">' + label + "</a>";
+      });
+      return t;
+    }
+
+    // Render markdown mínimo: encabezados, listas, tablas, code fences, párrafos.
+    function renderMarkdown(md) {
+      const lineas = md.replace(/\r\n/g, "\n").split("\n");
+      let html = "";
+      let i = 0;
+      let enLista = false;
+      let enOrden = false;
+
+      function cerrarLista() {
+        if (enLista) { html += "</ul>"; enLista = false; }
+        if (enOrden) { html += "</ol>"; enOrden = false; }
+      }
+
+      while (i < lineas.length) {
+        const linea = lineas[i];
+
+        // Bloque de código ```
+        if (linea.trim().startsWith("```")) {
+          cerrarLista();
+          i++;
+          let code = "";
+          while (i < lineas.length && !lineas[i].trim().startsWith("```")) {
+            code += escaparHtml(lineas[i]) + "\n";
+            i++;
+          }
+          i++;
+          html += "<pre><code>" + code + "</code></pre>";
+          continue;
+        }
+
+        // Tabla (encabezado seguido de fila |---|)
+        if (linea.indexOf("|") !== -1 && i + 1 < lineas.length && /^\s*\|?[\s:|-]+\|?\s*$/.test(lineas[i + 1]) && lineas[i + 1].indexOf("-") !== -1) {
+          cerrarLista();
+          const encabezados = linea.split("|").map(function (c) { return c.trim(); }).filter(function (c) { return c.length; });
+          html += "<table><thead><tr>" + encabezados.map(function (h) { return "<th>" + inline(h) + "</th>"; }).join("") + "</tr></thead><tbody>";
+          i += 2;
+          while (i < lineas.length && lineas[i].indexOf("|") !== -1) {
+            const celdas = lineas[i].split("|").map(function (c) { return c.trim(); }).filter(function (c) { return c.length; });
+            html += "<tr>" + celdas.map(function (c) { return "<td>" + inline(c) + "</td>"; }).join("") + "</tr>";
+            i++;
+          }
+          html += "</tbody></table>";
+          continue;
+        }
+
+        // Encabezados
+        const h = linea.match(/^(#{1,4})\s+(.*)$/);
+        if (h) {
+          cerrarLista();
+          const nivel = h[1].length;
+          const id = slugManual(h[2]);
+          html += "<h" + nivel + ' id="' + escaparAttr(id) + '">' + inline(h[2]) + "</h" + nivel + ">";
+          i++;
+          continue;
+        }
+
+        // Lista ordenada
+        if (/^\s*\d+\.\s+/.test(linea)) {
+          if (!enOrden) { cerrarLista(); html += "<ol>"; enOrden = true; }
+          html += "<li>" + inline(linea.replace(/^\s*\d+\.\s+/, "")) + "</li>";
+          i++;
+          continue;
+        }
+
+        // Lista con viñetas
+        if (/^\s*[-*]\s+/.test(linea)) {
+          if (!enLista) { cerrarLista(); html += "<ul>"; enLista = true; }
+          html += "<li>" + inline(linea.replace(/^\s*[-*]\s+/, "")) + "</li>";
+          i++;
+          continue;
+        }
+
+        // Línea vacía
+        if (linea.trim() === "") {
+          cerrarLista();
+          i++;
+          continue;
+        }
+
+        // Párrafo
+        cerrarLista();
+        html += "<p>" + inline(linea) + "</p>";
+        i++;
+      }
+      cerrarLista();
+      return html;
+    }
+
+    async function cargarManual() {
+      const status = document.getElementById("manualStatus");
+      const cont = document.getElementById("manualRender");
+      try {
+        const res = await fetch(API_BASE + "/manual", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          status.className = "status-bar visible warn";
+          status.textContent = data.error || "No se pudo cargar el manual.";
+          return;
+        }
+        cont.innerHTML = renderMarkdown(data.content);
+        status.className = "status-bar";
+        status.textContent = "";
+        manualCargado = true;
+      } catch (err) {
+        status.className = "status-bar visible warn";
+        status.textContent = "No se pudo cargar el manual: " + err.message;
+      }
+    }
+
+    document.getElementById("manualRender").addEventListener("click", function (ev) {
+      const link = ev.target.closest("a[data-manual-anchor]");
+      if (!link) return;
+
+      ev.preventDefault();
+      const id = link.getAttribute("data-manual-anchor");
+      const destino = id ? document.getElementById(id) : null;
+      if (!destino) return;
+
+      destino.scrollIntoView({ behavior: "smooth", block: "start" });
+      history.replaceState(null, "", "#" + id);
+    });
+
+    function medirChrome() {
+      const warn = document.getElementById("fileWarning");
+      const brand = document.querySelector(".brandbar");
+      const head = document.querySelector("header");
+      const nav = document.querySelector(".nav");
+      let h = 24;
+      [warn, brand, head, nav].forEach(function (el) {
+        if (!el || (el.id === "fileWarning" && !el.classList.contains("visible"))) return;
+        h += el.getBoundingClientRect().height;
+      });
+      h += parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--app-pad")) * 2 || 32;
+      document.documentElement.style.setProperty("--chrome", Math.ceil(h) + "px");
+    }
+
+    let resizeTimer = null;
+    function onViewportChange() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(medirChrome, 80);
+    }
+
+    window.addEventListener("resize", onViewportChange);
+    window.addEventListener("orientationchange", onViewportChange);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", onViewportChange);
+    }
+
+    function aplicarTema(tema) {
+      const t = tema === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t);
+      try { localStorage.setItem("sot-runner-theme", t); } catch (_) {}
+      document.getElementById("btnThemeLight").classList.toggle("active", t === "light");
+      document.getElementById("btnThemeDark").classList.toggle("active", t === "dark");
+    }
+
+    (function initTema() {
+      let guardado = null;
+      try { guardado = localStorage.getItem("sot-runner-theme"); } catch (_) {}
+      if (guardado !== "light" && guardado !== "dark") {
+        guardado = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark" : "light";
+      }
+      aplicarTema(guardado);
+    })();
+
+    document.getElementById("btnThemeLight").addEventListener("click", function () { aplicarTema("light"); });
+    document.getElementById("btnThemeDark").addEventListener("click", function () { aplicarTema("dark"); });
+
+    renderCategorias();
+    renderLista();
+    mostrarEscenario(ESCENARIOS[escenarioActual]);
+    medirChrome();
+    verificarServidor().then(function () {
+      if (servidorOnline) pilotoCargarEnRunner(null);
+    });
+    setInterval(verificarServidor, 10000);
+  </script>
+</body>
+</html>

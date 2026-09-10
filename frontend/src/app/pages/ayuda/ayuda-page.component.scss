@@ -1,0 +1,293 @@
+:host { display: block; }
+
+.ayuda-layout {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .ayuda-layout { grid-template-columns: 1fr; }
+}
+
+.ayuda-main {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.lead {
+  margin: 4px 0 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.ayuda-main h3 {
+  margin: 18px 0 8px;
+  color: var(--navy);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.muted { color: var(--muted); }
+
+.help-quick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.help-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--panel-soft);
+}
+
+.help-card h4 {
+  margin: 0 0 6px;
+  color: var(--navy);
+  font-size: 14px;
+}
+
+.help-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.help-card code,
+.steps code,
+.manual-render ::ng-deep code {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.help-more-links {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.help-more-links a {
+  color: var(--accent, var(--navy));
+  text-decoration: none;
+  font-weight: 600;
+}
+.help-more-links a:hover { text-decoration: underline; }
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 10px 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.tech-table,
+.manual-render ::ng-deep table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tech-table th,
+.tech-table td,
+.manual-render ::ng-deep th,
+.manual-render ::ng-deep td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.tech-table th,
+.manual-render ::ng-deep th {
+  background: var(--panel-soft);
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.tech-table tr:last-child td,
+.manual-render ::ng-deep tr:last-child td {
+  border-bottom: none;
+}
+
+.flow-box {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--log-bg);
+  color: var(--log-fg);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.steps {
+  margin: 0;
+  padding-left: 1.25em;
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.steps li { margin: 6px 0; }
+
+.manual-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.manual-head h2 { margin: 0; }
+
+.btn-link {
+  border: 1px solid var(--line);
+  background: var(--btn-bg);
+  color: var(--navy);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.manual-render {
+  font-size: 14px;
+  line-height: 1.55;
+  max-height: 70vh;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.manual-render ::ng-deep h1,
+.manual-render ::ng-deep h2,
+.manual-render ::ng-deep h3 {
+  color: var(--navy);
+  scroll-margin-top: 16px;
+}
+
+.manual-render ::ng-deep h1 { font-size: 22px; margin: 18px 0 10px; }
+.manual-render ::ng-deep h2 { font-size: 18px; margin: 16px 0 8px; }
+.manual-render ::ng-deep h3 { font-size: 15px; margin: 14px 0 6px; }
+
+.manual-render ::ng-deep p { margin: 0 0 10px; }
+.manual-render ::ng-deep ul,
+.manual-render ::ng-deep ol { margin: 0 0 12px; padding-left: 1.3em; }
+.manual-render ::ng-deep li { margin: 4px 0; }
+
+.manual-render ::ng-deep pre {
+  background: var(--log-bg);
+  color: var(--log-fg);
+  padding: 12px;
+  border-radius: 10px;
+  overflow-x: auto;
+  font-size: 12px;
+}
+
+.manual-render ::ng-deep blockquote {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--panel-soft);
+  color: var(--muted);
+}
+
+.manual-render ::ng-deep hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 18px 0;
+}
+
+.manual-render ::ng-deep a { color: var(--accent); }
+
+.manual-render ::ng-deep .table-wrap {
+  margin: 12px 0;
+}
+
+.ayuda-note {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  border-radius: 0 8px 8px 0;
+}
+
+.steps a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.version-line {
+  margin: 0 0 12px;
+  font-size: 12px;
+}
+
+.checklist-demo li {
+  margin: 8px 0;
+}
+
+.role-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.role-cards .help-card p {
+  font-size: 13px;
+}
+.role-cards .help-card a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.role-cards .help-card a:hover {
+  text-decoration: underline;
+}
+
+.panel-manual {
+  border-style: dashed;
+}
+
+.manual-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.manual-head-actions .btn-link {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#ayuda-inicio,
+#ayuda-mapa,
+#ayuda-proyecto-perfil,
+#ayuda-config,
+#ayuda-ejecutar,
+#ayuda-evidencias,
+#ayuda-release9,
+#ayuda-problemas,
+#ayuda-jira,
+#ayuda-generar,
+#ayuda-tecnologias,
+#ayuda-llm,
+#ayuda-qa,
+#ayuda-runneria,
+#ayuda-catalogo,
+#ayuda-manual {
+  scroll-margin-top: 12px;
+}

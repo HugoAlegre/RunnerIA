@@ -1,0 +1,67 @@
+<div class="crear-preview">
+  <label>Vista previa Gherkin @if (editandoArchivo) { · {{ editandoArchivo }} }</label>
+  @if (origenArchivo) {
+    <p class="origen-archivo">Origen: archivo <strong>{{ origenArchivo }}</strong></p>
+  }
+  <textarea
+    rows="18"
+    [ngModel]="featurePreview"
+    (ngModelChange)="featurePreviewChange.emit($event)"
+    spellcheck="false"
+    class="mono"
+    [attr.placeholder]="tienePreview ? null : 'Acá aparece el Gherkin después de subir un .feature o Analizar…'"
+  ></textarea>
+
+  <div class="actions mt-md actions-cta">
+    <button
+      type="button"
+      class="cta-main"
+      [class.primary]="tienePreview"
+      [disabled]="!tienePreview"
+      (click)="guardar.emit()"
+      [attr.title]="!tienePreview ? 'Subí un .feature o analizá para generar el Gherkin' : null"
+    >{{ editandoArchivo ? 'Guardar cambios' : 'Guardar prueba' }}</button>
+    @if (mostrarImportarLote && tienePreview) {
+      <button type="button" class="cta-secondary primary-outline" (click)="importarLote.emit()">
+        Importar como lote
+      </button>
+    }
+    <button type="button" class="cta-secondary" (click)="verModulos.emit()">Ver módulos</button>
+  </div>
+  @if (tienePreview) {
+    <p class="cta-hint">
+      @if (origenArchivo) {
+        Gherkin desde archivo — revisá y tocá <strong>Guardar prueba</strong>@if (mostrarImportarLote) { o <strong>Importar como lote</strong>}.
+      } @else {
+        Paso 2: revisá el Gherkin y tocá <strong>Guardar prueba</strong>.
+      }
+    </p>
+  }
+
+  <details class="avanzado-lote mt-sm">
+    <summary>Avanzado</summary>
+    <label class="checks mt-sm">
+      <input
+        type="checkbox"
+        [ngModel]="forzarIncompleto"
+        (ngModelChange)="forzarIncompletoChange.emit($event)"
+      /> Guardar igual si está incompleto
+    </label>
+    <label class="checks mt-xs">
+      <input
+        type="checkbox"
+        [ngModel]="sobrescribirLote"
+        (ngModelChange)="sobrescribirLoteChange.emit($event)"
+      /> Sobrescribir si el archivo ya existe (lote)
+    </label>
+    <p class="hint">Lote: varios Feature separados con <code>---</code>; opcional <code># Modulo: Nombre</code>.</p>
+    <div class="actions mt-sm">
+      <button
+        type="button"
+        (click)="importarLote.emit()"
+        [disabled]="!featurePreview.trim() && !detalle.trim()"
+      >Crear módulo(s) y casos</button>
+    </div>
+  </details>
+</div>
+

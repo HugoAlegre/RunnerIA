@@ -1,0 +1,667 @@
+<div class="config-layout">
+  <app-page-toc
+    title="Secciones"
+    [items]="tocItems()"
+    (navigate)="irA($event)"
+  />
+
+  <div class="config-main">
+    <div class="panel">
+      <h2>Configuración</h2>
+      <p class="muted">
+        Abrí solo lo que necesitás. El <strong>perfil del proyecto</strong> define si usás presets Accusys SOT
+        o una instancia vacía (banco / otra QA).
+      </p>
+
+      <div class="health-chips">
+        <button type="button" class="health-chip" [class.ok]="healthSot === 'ok'" [class.warn]="healthSot === 'warn'" (click)="irA('cfg-acceso')">
+          <span class="dot"></span> Acceso
+        </button>
+        <button type="button" class="health-chip" [class.ok]="healthSql === 'ok'" [class.warn]="healthSql === 'warn'" (click)="irA('cfg-sql')">
+          <span class="dot"></span> SQL
+        </button>
+        <button type="button" class="health-chip" [class.ok]="healthCobis === 'ok'" [class.warn]="healthCobis === 'warn'" (click)="irA('cfg-cobis')">
+          <span class="dot"></span> {{ workspace.esSotAccusys() ? 'COBIS' : 'Host BD' }}
+        </button>
+        <button type="button" class="health-chip" [class.ok]="healthJira === 'ok'" [class.warn]="healthJira === 'warn'" (click)="irA('cfg-jira')">
+          <span class="dot"></span> Jira
+        </button>
+      </div>
+
+      @if (status()) {
+        <div class="status-bar visible" [ngClass]="statusTipo()">{{ status() }}</div>
+      }
+
+      <!-- Perfil -->
+      <details class="cfg-section" id="cfg-perfil" open>
+        <summary class="cfg-summary">Perfil del proyecto</summary>
+        <div class="cliente-grid cfg-body">
+          <div class="cliente-info full">
+            Los <strong>casos de prueba</strong> del Runner no se borran al cambiar de perfil.
+            Solo cambia si se sugieren URLs/hosts Accusys o si todo queda para configurar a mano.
+          </div>
+          <div class="perfil-toggle full">
+            <button
+              type="button"
+              class="perfil-opt"
+              [class.active]="workspace.esSotAccusys()"
+              (click)="aplicarPerfil('sot-accusys')"
+            >
+              <strong>SOT Accusys</strong>
+              <span>DEV / QA con hosts conocidos</span>
+            </button>
+            <button
+              type="button"
+              class="perfil-opt"
+              [class.active]="workspace.esGenerico()"
+              (click)="aplicarPerfil('generico')"
+            >
+              <strong>Otro / vacío</strong>
+              <span>Sin presets; vos cargás URL y bases</span>
+            </button>
+          </div>
+          @if (workspace.esGenerico()) {
+            <div class="actions full">
+              <button type="button" (click)="vaciarCamposInstancia()">Vaciar URL y bases en el formulario</button>
+            </div>
+            <p class="hint full">
+              Las integraciones del proyecto (URL app, BD, Jira, Xray, etc.) se definen al
+              <strong>crear o modificar el proyecto</strong> en la pantalla inicial o en Generar → RunnerIA.
+              Acá completás las conexiones operativas para ejecutar pruebas.
+            </p>
+          }
+        </div>
+      </details>
+
+      <!-- Módulos y casos -->
+      <details class="cfg-section" id="cfg-modulos">
+        <summary class="cfg-summary">Catálogo: módulos y casos de prueba</summary>
+        <div class="cfg-body">
+          <p class="cliente-info">
+            Vista del catálogo del Runner. Al eliminar se pide confirmación.
+            Para crear o editar Gherkin usá <a routerLink="/generar">Generar pruebas</a>.
+          </p>
+          <app-modulos-lista
+            [modulos]="modulos()"
+            [abiertos]="modulosAbiertos()"
+            [menuModuloId]="menuModuloId()"
+            [renameId]="renameId()"
+            [renameValue]="renameValue"
+            [gherkinOpen]="gherkinOpen()"
+            [deshacerHint]="deshacerHintModulos()"
+            [puedeDeshacer]="puedeDeshacerModulos()"
+            (refresh)="refreshModulos()"
+            (deshacer)="deshacerModulo()"
+            (toggleGrupo)="toggleGrupoModulo($event)"
+            (toggleMenu)="toggleMenuModulo($event.id, $event.ev)"
+            (agregarPrueba)="agregarPruebaModulo($event)"
+            (abrirRename)="abrirRenameModulo($event.m, $event.ev)"
+            (eliminarModulo)="eliminarModuloModulo($event.m, $event.ev)"
+            (renameValueChange)="renameValue = $event"
+            (confirmRename)="confirmRenameModulo($event.m, $event.ev)"
+            (cancelRename)="cancelRenameModulo($event)"
+            (toggleGherkin)="toggleGherkinModulo($event)"
+            (editarPrueba)="editarPruebaModulo($event)"
+            (eliminarPrueba)="eliminarPruebaModulo($event)"
+          />
+        </div>
+      </details>
+
+      <!-- Ambiente -->
+      <details class="cfg-section" id="cfg-ambiente" open>
+        <summary class="cfg-summary">Ambiente / URL de la aplicación</summary>
+        <div class="cliente-grid cfg-body">
+          <div class="cliente-field">
+            <label>Ambiente</label>
+            <select [(ngModel)]="ambiente" (ngModelChange)="onAmbienteChange(true)">
+              @if (workspace.esSotAccusys()) {
+                <option value="Dev">DEV (Accusys)</option>
+                <option value="QA">QA (Accusys)</option>
+              }
+              <option value="Custom">Personalizado</option>
+            </select>
+          </div>
+          <div class="cliente-field full">
+            <label>URL de inicio</label>
+            <input
+              type="url"
+              [(ngModel)]="urlInicio"
+              [placeholder]="workspace.esSotAccusys() ? 'http://sot-app.accusys-dev.io/…' : 'https://tu-ambiente/…'"
+            />
+          </div>
+          @if (workspace.esSotAccusys()) {
+            <label class="checks">
+              <input type="checkbox" [(ngModel)]="ajustarSqlAmbiente" />
+              Al cambiar DEV/QA, sugerir también el host SQL SOT
+            </label>
+          }
+
+          @if (ambiente === 'QA' || !workspace.esSotAccusys()) {
+            <div class="auth-qa-box">
+              <strong>Auth OpenID (si aplica)</strong>
+              <p class="muted">URL <code>.well-known/openid-configuration</code>. En Accusys QA se sugiere sola; en otros proyectos pegá la de tu ambiente.</p>
+              <div class="cliente-field">
+                <label>URL OpenID</label>
+                <input type="url" [(ngModel)]="authOpenIdUrl" placeholder="https://…/.well-known/openid-configuration" />
+              </div>
+              <div class="actions mt-sm">
+                <button type="button" (click)="abrirAuthQa()">Abrir URL Auth</button>
+              </div>
+              <label class="checks">
+                <input type="checkbox" [(ngModel)]="permitirAuthQa" />
+                Permito el acceso Auth de este ambiente
+              </label>
+            </div>
+          }
+        </div>
+      </details>
+
+      <!-- Acceso -->
+      <details class="cfg-section" id="cfg-acceso" open>
+        <summary class="cfg-summary">Acceso a la aplicación</summary>
+        <div class="cliente-grid cfg-body">
+          <div class="cliente-field">
+            <label>Usuario</label>
+            <input type="text" [(ngModel)]="usuario" autocomplete="off" [placeholder]="workspace.esSotAccusys() ? 'ej. hugo.alegre' : 'usuario de la app'" />
+          </div>
+          <app-password-field
+            label="Contraseña"
+            [(value)]="passwordLogin"
+            [hint]="hintPass(tienePasswordLogin)"
+            [hintSet]="tienePasswordLogin"
+          />
+          <div class="cliente-field">
+            <label>Sucursal / oficina</label>
+            <input
+              type="text"
+              [(ngModel)]="sucursal"
+              [attr.list]="workspace.esSotAccusys() ? 'sucursalesList' : null"
+              autocomplete="off"
+              [placeholder]="workspace.esSotAccusys() ? 'ej. 131 - San Martin' : 'código o nombre'"
+              (change)="onSucursalChange()"
+            />
+            @if (workspace.esSotAccusys()) {
+              <datalist id="sucursalesList">
+                @for (s of sucursales; track s.codigo) {
+                  <option [value]="s.codigo + ' - ' + s.nombre"></option>
+                }
+              </datalist>
+            }
+          </div>
+          <div class="cliente-field">
+            <label>Código de sucursal</label>
+            <input type="text" [(ngModel)]="codigoSucursal" autocomplete="off" placeholder="ej. 131" />
+          </div>
+        </div>
+      </details>
+
+      @if (workspace.esSotAccusys()) {
+      <!-- Usuarios -->
+      <details class="cfg-section" id="cfg-usuarios">
+        <summary class="cfg-summary">Usuarios SOT (supervisor / roles)</summary>
+        <div class="cfg-body">
+          <p class="usuarios-sot-desc">
+            El <strong>primero</strong> de la lista se usa en supervisión y apertura.
+          </p>
+          <div class="usuarios-sot-full">
+            <div class="usuarios-sot-head">
+              <span>Rol</span>
+              <span>Usuario</span>
+              <span>Contraseña</span>
+              <span></span>
+            </div>
+            @for (u of usuariosSot; track $index; let i = $index) {
+              <div class="usuario-sot-row">
+                <div>
+                  <input type="text" [(ngModel)]="u.rol" placeholder="ej. SOT Supervisor" />
+                  @if (i === 0) {
+                    <span class="rol-principal">Principal</span>
+                  }
+                </div>
+                <input type="text" [(ngModel)]="u.usuario" autocomplete="off" placeholder="ej. sot1" />
+                <app-password-field
+                  [value]="u.password || ''"
+                  (valueChange)="u.password = $event"
+                  autocomplete="new-password"
+                  placeholder="••••••••"
+                  [hint]="u.tienePassword ? 'Guardada. Vacío = mantener.' : ''"
+                  [hintSet]="!!u.tienePassword"
+                />
+                <button
+                  type="button"
+                  class="btn-quitar-sot"
+                  title="Quitar usuario"
+                  [disabled]="usuariosSot.length <= 1"
+                  (click)="quitarUsuarioSot(i)"
+                >×</button>
+              </div>
+            }
+            <button type="button" class="btn-agregar-sot" (click)="agregarUsuarioSot()">+ Agregar usuario SOT</button>
+          </div>
+        </div>
+      </details>
+
+      <!-- SC-416 cajas cierre forzado -->
+      <details class="cfg-section" id="cfg-sc416" open>
+        <summary class="cfg-summary">SC-416 — Cajas cierre forzado (Nota)</summary>
+        <div class="cliente-grid cfg-body">
+          <p class="usuarios-sot-desc" style="grid-column: 1 / -1;">
+            Correlativos usados por la suite <strong>Mejoras · SC-416</strong>.
+            Compensada debe ir <strong>sin Nota</strong>; Normal y MiniBóveda <strong>con Nota</strong>.
+          </p>
+          <div class="cliente-field">
+            <label>Compensada (SIN Nota)</label>
+            <input type="text" [(ngModel)]="cierreForzadoNotaCompensada" autocomplete="off" placeholder="4161" />
+          </div>
+          <div class="cliente-field">
+            <label>Normal (CON Nota)</label>
+            <input type="text" [(ngModel)]="cierreForzadoNotaNormal" autocomplete="off" placeholder="4162" />
+          </div>
+          <div class="cliente-field">
+            <label>MiniBóveda (CON Nota)</label>
+            <input type="text" [(ngModel)]="cierreForzadoNotaMiniBoveda" autocomplete="off" placeholder="vacío = buscar por texto" />
+          </div>
+        </div>
+      </details>
+
+      <!-- Retiro de efectivo -->
+      <details class="cfg-section" id="cfg-retiro" open>
+        <summary class="cfg-summary">Retiro de efectivo — COBIS y monto aleatorio</summary>
+        <div class="cliente-grid cfg-body">
+          <p class="usuarios-sot-desc" style="grid-column: 1 / -1;">
+            Cuentas aptas: <strong>sin bloqueo</strong>, con <strong>saldo suficiente</strong>, filtro por
+            <strong>titularidad</strong> (individual / conjunta / indistinta / categorizada) y rotación de clientes.
+            El importe de retiro es <strong>aleatorio</strong> y acorde al saldo de cada cuenta.
+          </p>
+          <div class="cliente-field">
+            <label>Pool COBIS (TOP N candidatas)</label>
+            <input type="text" [(ngModel)]="cobisConsultaMaxCuentas" inputmode="numeric" autocomplete="off" placeholder="50" />
+          </div>
+          <div class="cliente-field">
+            <label>Modo rotación</label>
+            <select [(ngModel)]="cobisConsultaModoRotacion">
+              <option value="Aleatoria">Aleatoria</option>
+              <option value="RoundRobin">RoundRobin</option>
+              <option value="Primera">Primera</option>
+            </select>
+          </div>
+          <div class="cliente-field">
+            <label>Rotación por cliente</label>
+            <select [(ngModel)]="cobisConsultaRotacionPorCliente">
+              <option value="true">true — no repetir documento en corrida</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+          <div class="cliente-field">
+            <label>Una cuenta por cliente</label>
+            <select [(ngModel)]="cobisConsultaUnaCuentaPorCliente">
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+          <div class="cliente-field">
+            <label>Saldo mínimo pesos</label>
+            <input type="text" [(ngModel)]="cobisConsultaSaldoMinimoPesos" inputmode="decimal" autocomplete="off" placeholder="1000" />
+          </div>
+          <div class="cliente-field">
+            <label>Saldo mínimo USD/EUR</label>
+            <input type="text" [(ngModel)]="cobisConsultaSaldoMinimoExtranjera" inputmode="decimal" autocomplete="off" placeholder="100" />
+          </div>
+          <div class="cliente-field">
+            <label>Saldo mínimo categorizada</label>
+            <input type="text" [(ngModel)]="cobisConsultaSaldoMinimoCategorizada" inputmode="decimal" autocomplete="off" placeholder="100" />
+          </div>
+          <div class="cliente-field">
+            <label>Titularidad default (steps genéricos)</label>
+            <select [(ngModel)]="cobisConsultaTitularidadDefault">
+              <option value="Individual">Individual</option>
+              <option value="Conjunta">Conjunta</option>
+              <option value="Indistinta">Indistinta</option>
+              <option value="Categorizada">Categorizada</option>
+            </select>
+          </div>
+          <div class="cliente-field">
+            <label>Importe mínimo retiro (UI)</label>
+            <input type="text" [(ngModel)]="retiroImporteMinimo" inputmode="numeric" autocomplete="off" placeholder="100" />
+          </div>
+          <div class="cliente-field">
+            <label>Tope práctico retiro</label>
+            <input type="text" [(ngModel)]="retiroImporteMaximoPractico" inputmode="numeric" autocomplete="off" placeholder="500" />
+          </div>
+          <div class="cliente-field">
+            <label>Margen saldo residual ($)</label>
+            <input type="text" [(ngModel)]="retiroMargenSaldoResiduo" inputmode="numeric" autocomplete="off" placeholder="1" />
+          </div>
+          <div class="cliente-field">
+            <label>% mínimo del saldo (aleatorio)</label>
+            <input type="text" [(ngModel)]="retiroPorcentajeMinimo" inputmode="decimal" autocomplete="off" placeholder="0.05" />
+          </div>
+          <div class="cliente-field">
+            <label>% máximo del saldo (aleatorio)</label>
+            <input type="text" [(ngModel)]="retiroPorcentajeMaximo" inputmode="decimal" autocomplete="off" placeholder="0.40" />
+          </div>
+        </div>
+      </details>
+      }
+
+      <!-- SQL -->
+      <details class="cfg-section" id="cfg-sql">
+        <summary class="cfg-summary">{{ workspace.esSotAccusys() ? 'Base de datos SOT (SQL Server)' : 'Base SQL de la aplicación' }}</summary>
+        <div class="cliente-grid cfg-body">
+          @if (!workspace.esSotAccusys()) {
+            <p class="cliente-info full">Completá el servidor de tu instancia. No hay hosts Accusys precargados en este perfil.</p>
+          }
+          <div class="cliente-field">
+            <label>Servidor / host</label>
+            <input type="text" [(ngModel)]="sqlSotServidor" autocomplete="off" [placeholder]="workspace.esSotAccusys() ? 'ej. sqlsot.accusys-dev.io' : 'host o IP de SQL'" />
+          </div>
+          <div class="cliente-field">
+            <label>Puerto</label>
+            <input type="text" [(ngModel)]="sqlSotPuerto" inputmode="numeric" autocomplete="off" placeholder="ej. 1433" />
+          </div>
+          <div class="cliente-field">
+            <label>Usuario SQL</label>
+            <input type="text" [(ngModel)]="sqlSotUsuario" autocomplete="off" [placeholder]="workspace.esSotAccusys() ? 'ej. accusys' : 'usuario SQL'" />
+          </div>
+          <div class="cliente-field">
+            <label>Base de datos</label>
+            <input type="text" [(ngModel)]="sqlSotBaseDatos" autocomplete="off" [placeholder]="workspace.esSotAccusys() ? 'ej. UW_CASHIER' : 'nombre de la BD'" />
+          </div>
+          <app-password-field
+            label="Contraseña SQL"
+            [(value)]="passwordSqlSot"
+            [hint]="hintPass(tienePasswordSqlSot)"
+            [hintSet]="tienePasswordSqlSot"
+            [warnHint]="!tienePasswordSqlSot ? 'Completala y guardá la configuración.' : ''"
+          />
+          <div class="cliente-field">
+            <label>&nbsp;</label>
+            <button type="button" (click)="probarSqlSot()" [disabled]="probandoSql()">
+              {{ probandoSql() ? 'Probando…' : 'Probar conexión SQL' }}
+            </button>
+            @if (sqlStatus()) {
+              <div class="conn-status visible" [ngClass]="sqlStatusTipo()">{{ sqlStatus() }}</div>
+            }
+          </div>
+        </div>
+      </details>
+
+      <!-- COBIS / host operativo -->
+      <details class="cfg-section" id="cfg-cobis">
+        <summary class="cfg-summary">{{ workspace.esSotAccusys() ? 'Conexión Sybase (COBIS)' : 'Base operativa / Sybase u otro host' }}</summary>
+        <div class="cliente-grid cfg-body">
+          @if (!workspace.esSotAccusys()) {
+            <p class="cliente-info full">Si tu proyecto no usa COBIS, igual podés dejar host/usuario para consultas auxiliares o vaciar y guardar.</p>
+          }
+          <div class="cliente-field">
+            <label>Servidor (nombre)</label>
+            <input type="text" [(ngModel)]="cobisServidor" autocomplete="off" [placeholder]="workspace.esSotAccusys() ? 'ej. SYBSRV2' : 'nombre lógico'" />
+          </div>
+          <div class="cliente-field">
+            <label>Host / IP</label>
+            <input type="text" [(ngModel)]="cobisHost" autocomplete="off" placeholder="IP o hostname" />
+          </div>
+          <div class="cliente-field">
+            <label>Puerto</label>
+            <input type="text" [(ngModel)]="puertoSybase" inputmode="numeric" autocomplete="off" [placeholder]="workspace.esSotAccusys() ? 'ej. 7410' : 'puerto'" />
+          </div>
+          <div class="cliente-field">
+            <label>Usuario</label>
+            <input type="text" [(ngModel)]="cobisUsuario" autocomplete="off" placeholder="usuario BD" />
+          </div>
+          <div class="cliente-field">
+            <label>Base de datos</label>
+            <input type="text" [(ngModel)]="cobisBaseDatos" autocomplete="off" [placeholder]="workspace.esSotAccusys() ? 'ej. cobis' : 'nombre BD'" />
+          </div>
+          <app-password-field
+            label="Contraseña"
+            [(value)]="passwordCobis"
+            [hint]="hintPass(tienePasswordCobis)"
+            [hintSet]="tienePasswordCobis"
+          />
+          <div class="cliente-field">
+            <label>&nbsp;</label>
+            <button type="button" (click)="probarCobis()" [disabled]="probandoCobis()">
+              {{ probandoCobis() ? 'Probando…' : 'Probar conexión' }}
+            </button>
+            @if (cobisStatus()) {
+              <div class="conn-status visible" [ngClass]="cobisStatusTipo()">{{ cobisStatus() }}</div>
+            }
+          </div>
+        </div>
+      </details>
+
+      <!-- Jira -->
+      <details class="cfg-section" id="cfg-jira">
+        <summary class="cfg-summary">Jira (Atlassian)</summary>
+        <div class="cliente-grid cfg-body">
+          <div class="cliente-field">
+            <label>Email Jira</label>
+            <input type="email" [(ngModel)]="jiraEmail" autocomplete="username" placeholder="usuario@empresa.com" />
+          </div>
+          <app-password-field
+            label="API token Jira"
+            [(value)]="jiraToken"
+            placeholder="Pegá el token de Atlassian"
+            autocomplete="off"
+          />
+          <div class="cliente-field full">
+            <label>Link Jira del ticket</label>
+            <input
+              type="url"
+              [(ngModel)]="jiraUrl"
+              (ngModelChange)="onJiraUrlChange()"
+              autocomplete="off"
+              placeholder="https://…atlassian.net/browse/SC-…"
+            />
+            <span class="hint">Se sincroniza con <strong>Generar pruebas</strong>.</span>
+          </div>
+          <label class="checks"><input type="checkbox" [(ngModel)]="rememberJira" /> Recordar en esta sesión (token no queda en disco permanente)</label>
+          <div class="cliente-field full jira-actions">
+            <div class="catalogo-actions">
+              <button type="button" class="primary" (click)="probarJira()" [disabled]="probandoJira()">
+                {{ probandoJira() ? 'Sincronizando…' : 'Probar conexión Jira' }}
+              </button>
+            </div>
+            <span class="hint">
+              Token:
+              <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener">crear en Atlassian</a>.
+            </span>
+            @if (jiraStatus()) {
+              <div class="conn-status visible" [ngClass]="jiraStatusTipo()">{{ jiraStatus() }}</div>
+            }
+          </div>
+        </div>
+      </details>
+
+      <!-- Xray -->
+      <details class="cfg-section" id="cfg-xray">
+        <summary class="cfg-summary">Xray (Atlassian) — preparado</summary>
+        <div class="cliente-grid cfg-body">
+          <p class="cliente-info full">
+            Credenciales de tu instancia Xray (Cloud o Server/DC). Hoy se guardan para uso futuro
+            (Test Plans / sync). No se envían al servidor hasta que exista la integración activa.
+          </p>
+          <div class="cliente-field full">
+            <label>Base URL Xray / Jira</label>
+            <input
+              type="url"
+              [(ngModel)]="xrayBaseUrl"
+              autocomplete="off"
+              placeholder="https://tu-dominio.atlassian.net o URL Xray Server"
+            />
+          </div>
+          <div class="cliente-field">
+            <label>Client ID (Cloud) / usuario</label>
+            <input type="text" [(ngModel)]="xrayClientId" autocomplete="off" placeholder="opcional" />
+          </div>
+          <app-password-field
+            label="Client secret / token Xray"
+            [(value)]="xrayClientSecret"
+            autocomplete="off"
+          />
+          <label class="checks"><input type="checkbox" [(ngModel)]="rememberXray" /> Recordar en esta sesión</label>
+        </div>
+      </details>
+
+      <!-- LLM -->
+      <details class="cfg-section" id="cfg-llm">
+        <summary class="cfg-summary">LLM opcional</summary>
+        <div class="cliente-grid cfg-body">
+          <div class="cliente-info">
+            Sin LLM, Analizar igual funciona (mapa + OCR). Con API key mejora Gherkin y visión de capturas.
+          </div>
+          <label class="checks"><input type="checkbox" [(ngModel)]="usarLlm" /> Usar LLM al analizar</label>
+          <app-password-field label="API key" [(value)]="llmKey" autocomplete="off" />
+          <div class="cliente-field">
+            <label>Modelo</label>
+            <input type="text" [(ngModel)]="llmModel" placeholder="gpt-4o-mini" />
+          </div>
+          <div class="cliente-field full">
+            <label>Base URL (OpenAI-compatible)</label>
+            <input type="url" [(ngModel)]="llmBase" placeholder="vacío = OpenAI" />
+          </div>
+          <label class="checks"><input type="checkbox" [(ngModel)]="rememberLlm" /> Recordar en esta sesión (API key no queda en disco permanente)</label>
+        </div>
+      </details>
+
+      @if (workspace.esSotAccusys()) {
+      <!-- Repos -->
+      <details class="cfg-section" id="cfg-repos">
+        <summary class="cfg-summary">Repos célula SOT</summary>
+        <div class="cliente-grid cfg-body">
+          <div class="cliente-info">
+            URL remota TFS de cada repo. Sync: checkout + pull de
+            <strong>{{ ramaObjetivo || 'develop' }}</strong>. El PAT TFS va en secrets.
+          </div>
+          <div class="cliente-field">
+            <label>Rama objetivo</label>
+            <input type="text" [(ngModel)]="ramaObjetivo" autocomplete="off" placeholder="develop" />
+          </div>
+          <div class="cliente-field">
+            <label>Usuario TFS (Git)</label>
+            <input type="text" [(ngModel)]="tfsUsuario" autocomplete="off" placeholder="dominio\\usuario o email" />
+          </div>
+          <app-password-field
+            label="PAT / contraseña TFS"
+            [(value)]="tfsPat"
+            [hint]="hintPass(tienePatTfs)"
+            [hintSet]="tienePatTfs"
+          />
+          <label class="checks">
+            <input type="checkbox" [(ngModel)]="permitirGitPull" />
+            Permitir checkout + git pull / clone al sincronizar
+          </label>
+
+          @for (repo of catalogoRepos; track $index) {
+            <div class="cliente-field full repo-card">
+              <div class="repo-card-head">
+                <div class="repo-card-title">
+                  <strong>{{ repo.nombre || repo.id || 'Nuevo repositorio' }}</strong>
+                  <span class="repo-estado" [attr.data-estado]="repo.estado || 'pendiente'">{{ etiquetaEstado(repo) }}</span>
+                </div>
+                <div class="repo-card-actions">
+                  <button type="button" class="pass-toggle" (click)="toggleRepo($index)">
+                    {{ repoExpandido()[$index] ? 'Menos' : 'Más' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-repo-x"
+                    title="Eliminar repositorio"
+                    (click)="pedirEliminarRepo($index)"
+                    [disabled]="syncingCatalogo()"
+                  >×</button>
+                </div>
+              </div>
+              @if (repoExpandido()[$index]) {
+                <div class="repo-grid">
+                  <div class="cliente-field">
+                    <label>Id</label>
+                    <input type="text" [(ngModel)]="repo.id" autocomplete="off" placeholder="ej. app-cashier" [name]="'repo_id_' + $index" />
+                  </div>
+                  <div class="cliente-field">
+                    <label>Nombre</label>
+                    <input type="text" [(ngModel)]="repo.nombre" autocomplete="off" placeholder="Nombre visible" [name]="'repo_nom_' + $index" />
+                  </div>
+                  <div class="cliente-field">
+                    <label>Rol</label>
+                    <input type="text" [(ngModel)]="repo.rol" autocomplete="off" placeholder="UI / API / Modelos…" [name]="'repo_rol_' + $index" />
+                  </div>
+                  <div class="cliente-field full">
+                    <label>URL remota TFS</label>
+                    <input type="url" [(ngModel)]="repo.urlRemota" autocomplete="off" placeholder="http://tfs2018:8080/tfs/.../_git/..." [name]="'repo_url_' + $index" />
+                  </div>
+                </div>
+                <span class="hint">
+                  Ruta: <code>{{ repo.rutaEnmascarada || '***…/cache/' + (repo.id || '?') }}</code>
+                  @if (repo.rama) { · {{ repo.rama }} · {{ repo.commitCorto || '—' }} }
+                </span>
+              } @else {
+                <span class="hint">
+                  {{ repo.urlRemota || 'Sin URL' }}
+                  @if (repo.commitCorto) { · {{ repo.commitCorto }} }
+                </span>
+              }
+            </div>
+          }
+
+          <div class="cliente-field full">
+            <button type="button" class="btn-agregar-repo" (click)="agregarRepo()" [disabled]="syncingCatalogo()">
+              + Agregar repositorio
+            </button>
+          </div>
+
+          @if (catalogoGenerado()) {
+            <div class="cliente-info">Última sync: {{ catalogoGenerado() }} — {{ catalogoResumen() }}</div>
+          }
+          <div class="cliente-field full catalogo-actions">
+            <button type="button" (click)="guardarRutasCatalogo()" [disabled]="syncingCatalogo()">Guardar repos</button>
+            <button type="button" class="primary" (click)="sincronizarCatalogo(true)" [disabled]="syncingCatalogo()">
+              {{ syncingCatalogo() ? 'Sincronizando…' : 'Sincronizar repos' }}
+            </button>
+            <button type="button" (click)="sincronizarCatalogo(false)" [disabled]="syncingCatalogo()">Solo reindexar</button>
+          </div>
+        </div>
+      </details>
+      }
+
+      <div class="config-save-spacer" aria-hidden="true"></div>
+    </div>
+
+    <div class="config-save-bar">
+      <button type="button" (click)="recargar()">Recargar</button>
+      <button type="button" class="primary" (click)="guardar()">Guardar configuración</button>
+    </div>
+  </div>
+</div>
+
+<app-confirm-dialog
+  [open]="dialogOpen()"
+  mode="alert"
+  [ok]="dialogOk()"
+  [title]="dialogTitle()"
+  [body]="dialogBody()"
+  (closed)="cerrarDialogo()"
+/>
+
+<app-confirm-dialog
+  [open]="confirmEliminarOpen()"
+  mode="confirm"
+  [danger]="true"
+  eyebrow="Confirmar"
+  title="¿Seguro que quiere eliminar?"
+  [body]="'Se quitará del catálogo «' + (confirmEliminarNombre() || 'este repositorio') + '». No borra la carpeta del disco.'"
+  confirmLabel="Eliminar"
+  (closed)="onConfirmEliminar($event)"
+/>
+
+<app-confirm-dialog
+  [open]="confirmPruebaOpen()"
+  mode="confirm"
+  [danger]="confirmPruebaDanger()"
+  eyebrow="Confirmar"
+  [title]="confirmPruebaTitle()"
+  [body]="confirmPruebaBody()"
+  [confirmLabel]="confirmPruebaLabel()"
+  (closed)="closeConfirmPrueba($event)"
+/>
