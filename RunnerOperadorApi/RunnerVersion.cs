@@ -1,7 +1,7 @@
 /// <summary>Versión del Runner (API): número, canal beta y build.</summary>
 public static class RunnerVersion
 {
-    public const string Version = "0.0.11";
+    public const string Version = "0.0.12";
     public const string Channel = "beta";
     public const string Build = "20260910";
 

@@ -13,7 +13,9 @@ Programa portable de automatización SOT (ventana de escritorio + API).
 3. Descomprimí
 4. Doble clic en **`RunnerIA.exe`**
 
-PIN por defecto: **`1234`** (vencimiento desactivado).
+PIN por defecto: **`1234`** (vencimiento desactivado).
+
+Tras descomprimir el Release: doble clic en **0-ABRIR-RunnerIA.bat** (el exe esta en `host\RunnerIA.exe`; la raiz queda limpia a proposito).
 
 **Sin administrador:** el portable no es un instalador. Descomprimí en Desktop/Documentos (no en `Program Files`). Si aparece SmartScreen (“Windows protegió tu PC”), usá **Más información → Ejecutar de todas formas** — no pide UAC de admin.
 

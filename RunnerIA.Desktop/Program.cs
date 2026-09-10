@@ -36,31 +36,65 @@ internal static class Program
     }
 
     /// <summary>
-    /// Raíz del portable (donde están app/, wwwroot/) o carpeta del exe Desktop.
+    /// Raíz del portable (donde están app/, wwwroot/).
+    /// El host puede estar en la raíz o en host/ (layout portable limpio).
+    /// Usa la carpeta del .exe (ProcessPath), no solo BaseDirectory (single-file/temp).
     /// </summary>
     internal static string ResolvePortableRoot()
     {
-        var baseDir = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        // Publish: .../RunnerIA-win-x64/RunnerIA.exe  → raíz = esa carpeta
-        if (Directory.Exists(Path.Combine(baseDir, "app")) && Directory.Exists(Path.Combine(baseDir, "wwwroot")))
-            return baseDir;
-
-        // Dev: .../bin/.../net9.0-windows → subir hasta encontrar app/ o el repo
-        var dir = new DirectoryInfo(baseDir);
-        while (dir is not null)
+        foreach (var start in GetSearchRoots())
         {
-            if (Directory.Exists(Path.Combine(dir.FullName, "app"))
-                && Directory.Exists(Path.Combine(dir.FullName, "wwwroot")))
-                return dir.FullName;
+            var dir = new DirectoryInfo(start);
+            while (dir is not null)
+            {
+                if (Directory.Exists(Path.Combine(dir.FullName, "app"))
+                    && Directory.Exists(Path.Combine(dir.FullName, "wwwroot")))
+                    return dir.FullName;
 
-            var apiProj = Path.Combine(dir.FullName, "RunnerOperadorApi", "RunnerOperadorApi.csproj");
-            if (File.Exists(apiProj))
-                return dir.FullName;
+                var apiProj = Path.Combine(dir.FullName, "RunnerOperadorApi", "RunnerOperadorApi.csproj");
+                if (File.Exists(apiProj))
+                    return dir.FullName;
 
-            dir = dir.Parent;
+                dir = dir.Parent;
+            }
         }
 
-        return baseDir;
+        return AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+    }
+
+    private static IEnumerable<string> GetSearchRoots()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var list = new List<string>();
+
+        void Push(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return;
+            try
+            {
+                var full = Path.GetFullPath(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                if (seen.Add(full)) list.Add(full);
+            }
+            catch
+            {
+                /* ignore */
+            }
+        }
+
+        try
+        {
+            var exe = Environment.ProcessPath;
+            if (!string.IsNullOrEmpty(exe))
+                Push(Path.GetDirectoryName(exe));
+        }
+        catch
+        {
+            /* ignore */
+        }
+
+        Push(AppContext.BaseDirectory);
+        Push(AppDomain.CurrentDomain.BaseDirectory);
+        return list;
     }
 }
 

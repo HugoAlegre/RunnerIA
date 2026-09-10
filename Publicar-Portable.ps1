@@ -99,16 +99,19 @@ if (-not (Test-Path $exeServer)) {
     Write-Error "No se genero app\RunnerIA.Server.exe en $appDir"
 }
 
-Write-Host "dotnet publish Desktop ($Runtime) -> RunnerIA.exe..." -ForegroundColor DarkGray
+Write-Host "dotnet publish Desktop ($Runtime) -> host\RunnerIA.exe..." -ForegroundColor DarkGray
 dotnet publish $desktopProj -c Release -r $Runtime --self-contained true -o $publishDesktopTmp `
     /p:PublishSingleFile=false /p:AssemblyName=RunnerIA /p:Product=RunnerIA
 if ($LASTEXITCODE -ne 0) { Write-Error "publish Desktop fallo" }
 
-# Copiar host a la raiz del portable (lo que el usuario ejecuta)
-Copy-Item (Join-Path $publishDesktopTmp '*') $outDir -Recurse -Force
-$exeDesktop = Join-Path $outDir 'RunnerIA.exe'
+# Layout limpio: runtime del host en host/ (la raiz solo tiene lanzadores + app + wwwroot).
+# Asi en otra PC no hay que buscar RunnerIA.exe entre cientos de DLL.
+$hostDir = Join-Path $outDir 'host'
+New-Item -ItemType Directory -Force -Path $hostDir | Out-Null
+Copy-Item (Join-Path $publishDesktopTmp '*') $hostDir -Recurse -Force
+$exeDesktop = Join-Path $hostDir 'RunnerIA.exe'
 if (-not (Test-Path $exeDesktop)) {
-    Write-Error "No se genero RunnerIA.exe (host de escritorio) en $outDir"
+    Write-Error "No se genero host\RunnerIA.exe en $hostDir"
 }
 
 $gitHash = ''
@@ -125,93 +128,123 @@ $versionLines = @(
 )
 if ($gitHash) { $versionLines += "Git: $gitHash" }
 $versionLines += "Frontend build: $(if ($builtFrontend) { 'si' } else { 'omitido/cache' })"
-$versionLines += "Host: RunnerIA.exe (WebView2)"
+$versionLines += "Host: host\RunnerIA.exe (WebView2)"
 $versionLines += "API: app\RunnerIA.Server.exe"
+$versionLines += "Admin: NO (asInvoker)"
 [IO.File]::WriteAllLines((Join-Path $outDir 'version.txt'), $versionLines, [Text.UTF8Encoding]::new($false))
 
+# Launchers ASCII-only (CMD en PCs corporativas falla con UTF-8/PowerShell bloqueado).
 $batPortable = @'
 @echo off
 setlocal EnableExtensions
 title RunnerIA
 cd /d "%~dp0"
 
-REM Portable: NO requiere administrador.
-REM Quita "Mark of the Web" del ZIP de GitHub (SmartScreen), sin elevar privilegios.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%~dp0' -Recurse -File -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue" >nul 2>&1
+REM Portable: no admin, no instalador.
+REM Desbloqueo MotW solo del lanzador/host (sin PowerShell obligatorio para arrancar).
+if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" (
+  "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -Command "Unblock-File -LiteralPath '%~f0' -EA SilentlyContinue; Unblock-File -LiteralPath '%~dp0host\RunnerIA.exe' -EA SilentlyContinue; Unblock-File -LiteralPath '%~dp0app\RunnerIA.Server.exe' -EA SilentlyContinue" >nul 2>&1
+)
 
-if not exist "%~dp0RunnerIA.exe" (
-  echo ERROR: No se encontro RunnerIA.exe
-  echo Baja el ZIP del Release de GitHub ^(no Code - Download ZIP^).
+set "HOSTEXE=%~dp0host\RunnerIA.exe"
+if not exist "%HOSTEXE%" set "HOSTEXE=%~dp0RunnerIA.exe"
+if not exist "%HOSTEXE%" (
+  echo.
+  echo ERROR: No se encontro host\RunnerIA.exe
+  echo.
+  echo 1^) Baja RunnerIA-win-x64.zip desde GitHub Releases
+  echo    https://github.com/HugoAlegre/RunnerIA/releases
+  echo 2^) NO uses Code - Download ZIP ^(eso es codigo fuente^)
+  echo 3^) Descomprimi TODO el ZIP y abre ESTA carpeta
+  echo.
+  echo Archivos .exe en esta carpeta:
+  dir /b "%~dp0*.exe" 2>nul
+  dir /b "%~dp0host\*.exe" 2>nul
+  echo.
   pause
   exit /b 1
 )
 
 if not exist "%~dp0app\RunnerIA.Server.exe" (
   if not exist "%~dp0app\RunnerIA.exe" (
-    echo ERROR: No se encontro app\RunnerIA.Server.exe
+    echo ERROR: Falta app\RunnerIA.Server.exe ^(ZIP incompleto^)
     pause
     exit /b 1
   )
 )
 
-echo RunnerIA portable - sin instalacion ni admin
-start "" "%~dp0RunnerIA.exe"
+echo Iniciando RunnerIA ^(sin instalacion ni administrador^)...
+start "" "%HOSTEXE%"
 exit /b 0
 '@
-[IO.File]::WriteAllText((Join-Path $outDir 'Iniciar-RunnerIA.bat'), $batPortable, [Text.UTF8Encoding]::new($false))
+# CMD-friendly: ANSI/ASCII bytes
+[IO.File]::WriteAllText((Join-Path $outDir 'Iniciar-RunnerIA.bat'), $batPortable, [Text.Encoding]::ASCII)
+[IO.File]::WriteAllText((Join-Path $outDir '0-ABRIR-RunnerIA.bat'), $batPortable, [Text.Encoding]::ASCII)
+
+# Copia visible del nombre que la gente busca (atajo .cmd a host)
+$cmdShortcut = @"
+@echo off
+cd /d "%~dp0"
+call "%~dp00-ABRIR-RunnerIA.bat"
+"@
+[IO.File]::WriteAllText((Join-Path $outDir 'RunnerIA.cmd'), $cmdShortcut, [Text.Encoding]::ASCII)
 
 $leeme = @"
 RunnerIA - programa portable (SIN administrador)
 ================================================
 
-IMPORTANTE
-----------
-- NO pide permisos de administrador.
-- NO es un instalador: descomprimis y listo.
-- NO uses Code > Download ZIP de GitHub (eso es codigo fuente sin .exe).
-- Usa el ZIP del Release: RunnerIA-win-x64.zip
+COMO ABRIR (cualquier PC Windows 10/11 x64)
+------------------------------------------
+1. Descomprimi RunnerIA-win-x64.zip completo.
+2. Entra a la carpeta RunnerIA-win-x64.
+3. Doble clic en:  0-ABRIR-RunnerIA.bat
+   (tambien sirve Iniciar-RunnerIA.bat o RunnerIA.cmd)
 
-Arranque
---------
-1. Descomprimi en una carpeta de USUARIO (Desktop, Documentos, C:\Repositorio\...).
-   Evita Program Files (ahi Windows puede pedir admin al escribir).
-2. Doble clic en RunnerIA.exe
-   o Iniciar-RunnerIA.bat (tambien desbloquea el aviso SmartScreen).
-3. Si Windows muestra SmartScreen ("Windows protegio tu PC"):
-   Mas informacion -> Ejecutar de todas formas
-   Eso NO es instalacion ni admin; es aviso de archivo descargado.
-4. PIN por defecto: 1234
+NO hace falta instalar nada ni ser administrador.
+NO uses Code > Download ZIP de GitHub (eso NO trae el programa).
+Usa el ZIP del Release: RunnerIA-win-x64.zip
+
+Donde esta el .exe
+------------------
+El programa esta en:  host\RunnerIA.exe
+La raiz se dejo limpia a proposito (solo lanzadores + LEEME).
+No busques el .exe entre DLLs: usa el .bat de arriba.
+
+Si Windows muestra SmartScreen
+------------------------------
+Mas informacion -> Ejecutar de todas formas
+Eso NO es instalacion ni admin; es aviso de archivo bajado de internet.
+
+PIN por defecto: 1234
 
 Requisito
 ---------
 WebView2 Runtime (Windows 10/11 actualizado). Si falta, el programa
-NO instala nada solo; te ofrece abrir en el navegador o el link
-oficial de WebView2.
+NO instala nada solo; ofrece abrir en el navegador.
 
-Layout con pruebas
-------------------
-  Carpeta/
-    RunnerIA-win-x64/     <- esta carpeta
-    AutomatizacionSOT/
-      AutomatizacionSOT/
-
-Que incluye
------------
-- RunnerIA.exe (escritorio, asInvoker = usuario normal)
-- app/RunnerIA.Server.exe (API, asInvoker)
-- wwwroot/, LEEME.txt, Iniciar-RunnerIA.bat
+Layout
+------
+  RunnerIA-win-x64\
+    0-ABRIR-RunnerIA.bat   <-- ABRIR AQUI
+    Iniciar-RunnerIA.bat
+    RunnerIA.cmd
+    LEEME.txt
+    host\RunnerIA.exe      <-- programa
+    app\RunnerIA.Server.exe
+    wwwroot\
 "@
 [IO.File]::WriteAllText((Join-Path $outDir 'LEEME.txt'), $leeme.Replace("`r`n", "`n").Replace("`n", "`r`n"), [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText(
     (Join-Path $outDir 'README-PORTABLE.txt'),
-    "RunnerIA portable SIN admin. Doble clic RunnerIA.exe. Si SmartScreen: Mas info -> Ejecutar de todas formas. PIN 1234.",
-    [Text.UTF8Encoding]::new($false))
+    "ABRIR: doble clic en 0-ABRIR-RunnerIA.bat  |  EXE: host\RunnerIA.exe  |  SIN admin  |  PIN 1234  |  Baja desde Releases, no Code ZIP.",
+    [Text.Encoding]::ASCII)
 
 # Validacion post-publish
 $checks = @(
-    @{ Path = $exeDesktop; Label = 'RunnerIA.exe (escritorio)' },
+    @{ Path = $exeDesktop; Label = 'host\RunnerIA.exe (escritorio)' },
     @{ Path = $exeServer; Label = 'app\RunnerIA.Server.exe' },
     @{ Path = (Join-Path $outDir 'wwwroot'); Label = 'wwwroot' },
+    @{ Path = (Join-Path $outDir '0-ABRIR-RunnerIA.bat'); Label = '0-ABRIR-RunnerIA.bat' },
     @{ Path = (Join-Path $outDir 'Iniciar-RunnerIA.bat'); Label = 'Iniciar-RunnerIA.bat' },
     @{ Path = (Join-Path $outDir 'LEEME.txt'); Label = 'LEEME.txt' },
     @{ Path = (Join-Path $outDir 'version.txt'); Label = 'version.txt' }
@@ -219,12 +252,24 @@ $checks = @(
 foreach ($c in $checks) {
     if (-not (Test-Path $c.Path)) { Write-Error "Validacion fallida: falta $($c.Label)" }
 }
-Write-Host 'Validacion post-publish: OK' -ForegroundColor Green
+
+# Raiz limpia: no debe haber coreclr.dll ni cientos de DLL mezclados con el lanzador
+$rootDll = @(Get-ChildItem -LiteralPath $outDir -File -Filter '*.dll' -ErrorAction SilentlyContinue)
+if ($rootDll.Count -gt 0) {
+    Write-Error ("Validacion fallida: la raiz tiene DLL ({0}). Deben estar solo en host\ y app\." -f $rootDll[0].Name)
+}
+$rootExe = @(Get-ChildItem -LiteralPath $outDir -File -Filter '*.exe' -ErrorAction SilentlyContinue)
+if ($rootExe.Count -gt 0) {
+    Write-Error ("Validacion fallida: la raiz tiene .exe ({0}). El host debe vivir en host\." -f $rootExe[0].Name)
+}
+
+Write-Host 'Validacion post-publish: OK (raiz limpia, host\ + app\)' -ForegroundColor Green
 
 Remove-Item $publishTmp -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item $publishDesktopTmp -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host "Listo: $outDir" -ForegroundColor Green
-Write-Host "Abri el programa con: $exeDesktop" -ForegroundColor Cyan
+Write-Host "Abri con: $(Join-Path $outDir '0-ABRIR-RunnerIA.bat')" -ForegroundColor Cyan
+Write-Host "O directo: $exeDesktop" -ForegroundColor Cyan
 if ($Zip) {
     $zipPath = Join-Path $runnerRoot "dist\RunnerIA-$Runtime.zip"
     if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
