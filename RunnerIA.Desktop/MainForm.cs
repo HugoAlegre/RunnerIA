@@ -62,8 +62,10 @@ internal sealed class MainForm : Form
         {
             _status.Text =
                 "Falta el runtime de Microsoft Edge WebView2.\n\n"
-                + "Instalalo desde:\nhttps://developer.microsoft.com/microsoft-edge/webview2/\n\n"
-                + "Luego volvé a abrir RunnerIA.exe";
+                + "No se instala nada automaticamente (no pide administrador).\n"
+                + "Si queres instalarlo vos (usuario): \n"
+                + "https://developer.microsoft.com/microsoft-edge/webview2/\n\n"
+                + "O usa 'Abrir en el navegador' abajo.";
             TryOpenInBrowserFallback();
         }
         catch (Exception ex)

@@ -12,11 +12,11 @@
     <Product>RunnerIA</Product>
     <AssemblyTitle>RunnerIA</AssemblyTitle>
     <AssemblyProduct>RunnerIA</AssemblyProduct>
-    <Version>0.0.10</Version>
-    <FileVersion>0.0.10.0</FileVersion>
-    <InformationalVersion>0.0.10</InformationalVersion>
+    <Version>0.0.11</Version>
+    <FileVersion>0.0.11.0</FileVersion>
+    <InformationalVersion>0.0.11</InformationalVersion>
     <RootNamespace>RunnerIA.Desktop</RootNamespace>
-    <Description>RunnerIA — programa de escritorio (WebView2)</Description>
+    <Description>RunnerIA - programa de escritorio (WebView2). Sin privilegios de administrador.</Description>
   </PropertyGroup>
 
   <ItemGroup>

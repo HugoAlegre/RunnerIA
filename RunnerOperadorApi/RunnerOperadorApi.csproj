@@ -9,6 +9,7 @@
     <AssemblyName>RunnerIA</AssemblyName>
     <Product>RunnerIA</Product>
     <AssemblyTitle>RunnerIA</AssemblyTitle>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>

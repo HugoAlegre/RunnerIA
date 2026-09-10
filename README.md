@@ -15,6 +15,8 @@ Programa portable de automatización SOT (ventana de escritorio + API).
 
 PIN por defecto: **`1234`** (vencimiento desactivado).
 
+**Sin administrador:** el portable no es un instalador. Descomprimí en Desktop/Documentos (no en `Program Files`). Si aparece SmartScreen (“Windows protegió tu PC”), usá **Más información → Ejecutar de todas formas** — no pide UAC de admin.
+
 ### Layout en otro PC
 
 ```text

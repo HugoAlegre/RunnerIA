@@ -135,9 +135,13 @@ setlocal EnableExtensions
 title RunnerIA
 cd /d "%~dp0"
 
+REM Portable: NO requiere administrador.
+REM Quita "Mark of the Web" del ZIP de GitHub (SmartScreen), sin elevar privilegios.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%~dp0' -Recurse -File -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue" >nul 2>&1
+
 if not exist "%~dp0RunnerIA.exe" (
   echo ERROR: No se encontro RunnerIA.exe
-  echo Regenera el portable con Publicar-Portable.ps1
+  echo Baja el ZIP del Release de GitHub ^(no Code - Download ZIP^).
   pause
   exit /b 1
 )
@@ -150,62 +154,57 @@ if not exist "%~dp0app\RunnerIA.Server.exe" (
   )
 )
 
+echo RunnerIA portable - sin instalacion ni admin
 start "" "%~dp0RunnerIA.exe"
 exit /b 0
 '@
 [IO.File]::WriteAllText((Join-Path $outDir 'Iniciar-RunnerIA.bat'), $batPortable, [Text.UTF8Encoding]::new($false))
 
 $leeme = @"
-RunnerIA - programa portable de escritorio
-==========================================
+RunnerIA - programa portable (SIN administrador)
+================================================
+
+IMPORTANTE
+----------
+- NO pide permisos de administrador.
+- NO es un instalador: descomprimis y listo.
+- NO uses Code > Download ZIP de GitHub (eso es codigo fuente sin .exe).
+- Usa el ZIP del Release: RunnerIA-win-x64.zip
 
 Arranque
 --------
-1. Deja esta carpeta junto a AutomatizacionSOT (hermanas), por ejemplo:
+1. Descomprimi en una carpeta de USUARIO (Desktop, Documentos, C:\Repositorio\...).
+   Evita Program Files (ahi Windows puede pedir admin al escribir).
+2. Doble clic en RunnerIA.exe
+   o Iniciar-RunnerIA.bat (tambien desbloquea el aviso SmartScreen).
+3. Si Windows muestra SmartScreen ("Windows protegio tu PC"):
+   Mas informacion -> Ejecutar de todas formas
+   Eso NO es instalacion ni admin; es aviso de archivo descargado.
+4. PIN por defecto: 1234
 
-   Carpeta/
-     RunnerIA-$Runtime/          <- esta carpeta
-     AutomatizacionSOT/
-       AutomatizacionSOT/        <- AutomatizacionSOT.csproj + run-*.ps1
+Requisito
+---------
+WebView2 Runtime (Windows 10/11 actualizado). Si falta, el programa
+NO instala nada solo; te ofrece abrir en el navegador o el link
+oficial de WebView2.
 
-2. Doble clic en RunnerIA.exe  (o Iniciar-RunnerIA.bat)
-3. Se abre una ventana de programa (no el navegador).
-4. Al cerrar la ventana se detiene el servidor interno.
+Layout con pruebas
+------------------
+  Carpeta/
+    RunnerIA-win-x64/     <- esta carpeta
+    AutomatizacionSOT/
+      AutomatizacionSOT/
 
-Requisito de Windows
---------------------
-Microsoft Edge WebView2 Runtime (viene con Windows 10/11 actualizado).
-Si falta: https://developer.microsoft.com/microsoft-edge/webview2/
-
-Que incluye este ZIP
---------------------
-- RunnerIA.exe              <- programa de escritorio (WebView2)
-- app/RunnerIA.Server.exe   <- API interna (self-contained)
-- wwwroot/                  <- UI Angular
-- Iniciar-RunnerIA.bat, version.txt, este LEEME
-
-Que NO incluye
---------------
-- AutomatizacionSOT (features, scripts, secrets)
-- Navegadores Playwright
-- .NET SDK para compilar SpecFlow
-- Contrasenas / appsettings.secrets.json
-
-Sin AutomatizacionSOT la UI igual arranca (modo ayuda). Las corridas
-responden con un mensaje claro hasta que coloques la suite hermana
-o definas la variable AutomatizacionSOT_ROOT.
-
-Generar de nuevo
-----------------
-En el repo RunnerIA:
-
-  .\Publicar-Portable.ps1
-  .\Publicar-Portable.ps1 -Zip
+Que incluye
+-----------
+- RunnerIA.exe (escritorio, asInvoker = usuario normal)
+- app/RunnerIA.Server.exe (API, asInvoker)
+- wwwroot/, LEEME.txt, Iniciar-RunnerIA.bat
 "@
 [IO.File]::WriteAllText((Join-Path $outDir 'LEEME.txt'), $leeme.Replace("`r`n", "`n").Replace("`n", "`r`n"), [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText(
     (Join-Path $outDir 'README-PORTABLE.txt'),
-    "RunnerIA portable. Doble clic en RunnerIA.exe (ventana de programa). Lee LEEME.txt.",
+    "RunnerIA portable SIN admin. Doble clic RunnerIA.exe. Si SmartScreen: Mas info -> Ejecutar de todas formas. PIN 1234.",
     [Text.UTF8Encoding]::new($false))
 
 # Validacion post-publish
