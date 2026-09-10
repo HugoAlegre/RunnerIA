@@ -1,84 +1,69 @@
 # RunnerIA
 
-Proyecto **independiente** (workspace aparte) — cara del programa de automatización SOT.
+Programa portable de automatización SOT (ventana de escritorio + API).
 
-## Ubicación
+## Descargar el programa (otras máquinas)
+
+**No uses** el botón verde **Code → Download ZIP** de GitHub: eso es solo el **código fuente** y **no trae** `RunnerIA.exe`.
+
+### Lo correcto
+
+1. Abrí **[Releases](https://github.com/HugoAlegre/RunnerIA/releases)**
+2. Bajá el archivo **`RunnerIA-win-x64.zip`** (portable)
+3. Descomprimí
+4. Doble clic en **`RunnerIA.exe`**
+
+PIN por defecto: **`1234`** (vencimiento desactivado).
+
+### Layout en otro PC
+
+```text
+Carpeta/
+  RunnerIA-win-x64/
+    RunnerIA.exe              ← programa
+    Iniciar-RunnerIA.bat
+    app\RunnerIA.Server.exe
+    wwwroot\
+  AutomatizacionSOT\          ← opcional, para correr pruebas
+    AutomatizacionSOT\
+```
+
+| Qué querés | Qué necesitás |
+|------------|----------------|
+| Abrir el programa (UI / ayuda / config) | Solo el ZIP portable + WebView2 |
+| Correr pruebas SpecFlow | Portable + carpeta hermana AutomatizacionSOT + Playwright + .NET SDK |
+
+Requisito Windows: **WebView2 Runtime** (suele venir con Windows 10/11). Si falta: https://developer.microsoft.com/microsoft-edge/webview2/
+
+## Desarrolladores (código fuente)
+
+Repo: https://github.com/HugoAlegre/RunnerIA
 
 ```text
 C:\Repositorio\Proyecto\
-  RunnerIA\                 ← ABRÍ ESTA CARPETA EN CURSOR
-  AutomatizacionSOT\        ← repo de tests (hermano)
-    AutomatizacionSOT\      ← SpecFlow / appsettings
+  RunnerIA\                 ← este proyecto
+  AutomatizacionSOT\        ← tests (hermano)
 ```
 
-## Abrir en Cursor
+Arranque en desarrollo:
 
-1. **File → Open Folder** → `C:\Repositorio\Proyecto\RunnerIA`  
-   **o** doble clic en `RunnerIA.code-workspace` (abre RunnerIA + carpeta de tests).
+```powershell
+.\Iniciar-RunnerIA.bat
+```
 
-2. Arrancar: doble clic en **`Iniciar-RunnerIA.bat`**
+Generar portable localmente:
 
-3. Navegador: **http://localhost:5050/** (título **RunnerIA**)
+```powershell
+.\Publicar-Portable.ps1 -Zip
+```
+
+Salida: `dist\RunnerIA-win-x64\` y `dist\RunnerIA-win-x64.zip` (el mismo que se sube al Release).
 
 ## Relación con AutomatizacionSOT
 
 | Proyecto | Rol |
 |----------|-----|
-| **RunnerIA** (este) | UI + API del programa |
-| **AutomatizacionSOT** (hermano) | Features, steps, scripts `run-*.ps1`, secrets |
+| **RunnerIA** | UI + API + Desktop |
+| **AutomatizacionSOT** | Features, steps, scripts `run-*.ps1`, secrets |
 
-No hace falta duplicar los tests aquí. RunnerIA apunta a `..\AutomatizacionSOT\AutomatizacionSOT`.
-
-## OneDrive
-
-Podés tener **ambas** carpetas en OneDrive (hermanas). El build de la API sale a `%LOCALAPPDATA%\RunnerIA\` (ruta corta).
-
-## Programa portable (ventana de escritorio)
-
-Genera un **programa con .exe** (no abre el navegador): ventana nativa con WebView2 + API interna.
-
-```powershell
-.\Publicar-Portable.ps1
-.\Publicar-Portable.ps1 -Zip
-```
-
-Salida:
-
-```text
-dist\RunnerIA-win-x64\
-  RunnerIA.exe                 ← DOBLE CLIC AQUÍ (ventana de programa)
-  Iniciar-RunnerIA.bat         ← atajo que lanza el .exe
-  LEEME.txt
-  version.txt
-  app\RunnerIA.Server.exe      ← API interna (la inicia el host)
-  wwwroot\
-dist\RunnerIA-win-x64.zip      (con -Zip)
-```
-
-### Cómo usarlo en otro PC
-
-```text
-Carpeta/
-  RunnerIA-win-x64\          ← descomprimí el ZIP aquí
-  AutomatizacionSOT\
-    AutomatizacionSOT\       ← csproj + run-*.ps1 + secrets
-```
-
-1. Doble clic en **`RunnerIA.exe`**
-2. Se abre la ventana del programa (UI embebida)
-3. Al cerrar la ventana se detiene el servidor
-
-Requisito: **WebView2 Runtime** (incluido en Windows 10/11 actualizado). Si falta: https://developer.microsoft.com/microsoft-edge/webview2/
-
-| Qué querés | Requisito |
-|------------|-----------|
-| Abrir el programa (UI / ayuda) | Solo la carpeta portable + WebView2 |
-| Correr pruebas SpecFlow | Portable **+** AutomatizacionSOT hermano + Playwright browsers + SDK .NET |
-
-Sin la suite, la UI arranca en **modo ayuda** (banner aviso); las corridas responden con un mensaje claro (HTTP 503).
-
-El ZIP **no** incluye: AutomatizacionSOT, browsers Playwright, secretos, ni instalador MSI.
-
-### Etapa 2 (aún no)
-
-Empaquetar AutomatizacionSOT + prerequisitos de ejecución en el mismo ZIP / instalador.
+El ZIP portable **no** incluye AutomatizacionSOT, browsers Playwright ni secretos.
